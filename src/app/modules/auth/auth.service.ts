@@ -1,6 +1,9 @@
+import { envVars } from "../../config/env";
+import { generateToken } from "../../utils/jwt";
 import { IUser } from "../user/user.interface"
 import { User } from "../user/user.model";
 import  bcryptjs  from 'bcryptjs';
+
 
 const credentialsLogin = async(payload: Partial<IUser>) => {
     
@@ -16,9 +19,20 @@ const credentialsLogin = async(payload: Partial<IUser>) => {
         throw new Error('Invalid credentials');
     }
 
+    const jwtPayload = {
+      userId: isUserExist._id,
+      email: isUserExist.email,
+      role: isUserExist.role,
+    };
+
     
+    const accessToken = generateToken(jwtPayload, 
+        envVars.JWT_ACCESS_SECRET, 
+        envVars.JWT_ACCESS_EXPIRATION
+    );
     return {
-        email : isUserExist.email,
+       
+        accessToken,
     }
 
 }

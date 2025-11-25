@@ -3,6 +3,7 @@ import { IAuthProvider, IUser } from "./user.interface";
 import { User } from "./user.model";
 import  httpStatus  from 'http-status-codes';
 import bcryptjs from 'bcryptjs';
+import { envVars } from "../../config/env";
 
 
 const createUser = async(payload : Partial<IUser>) : Promise<IUser> => {
@@ -10,12 +11,7 @@ const createUser = async(payload : Partial<IUser>) : Promise<IUser> => {
      const {  email ,password,  ...rest} = payload;
     //   const user = await User.create({  email, ...rest});
 
-    const hashedPassword = await bcryptjs.hash(password as string, 10);
-
-    const isPasswordMatched = await bcryptjs.compare(password as string, hashedPassword);
-    // This should log 'true'
-
-
+    const hashedPassword = await bcryptjs.hash(password as string,envVars.BCRYPT_SALT_ROUNDS as string);
 
 
       const isUserExist = await User.findOne({ email });
