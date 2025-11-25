@@ -43,6 +43,7 @@ export const checkAuth= (...authRoles: string[]) =>async (req: Request, res: Res
       );
     }
 
+    req.user = verifiedToken ;
 
     next();
   } catch (err) {
