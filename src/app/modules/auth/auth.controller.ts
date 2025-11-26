@@ -61,7 +61,7 @@ const getNewAccessToken = catchAsync(
     sendResponse(res, {
       statusCode: httpStatus.CREATED,
       success: true,
-      message: "User Logged in successfully",
+      message: "Access token refreshed successfully",
       data: tokenInfo,
     });
   }
@@ -69,7 +69,32 @@ const getNewAccessToken = catchAsync(
 
 
 
+const logoutUser = catchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    
+    res.clearCookie('accessToken', {
+      httpOnly: true,
+      secure: false,
+      sameSite: 'lax', 
+    });
+
+    res.clearCookie('refreshToken', {
+      httpOnly: true,
+      secure: false,
+      sameSite: 'lax', 
+    });
+
+    sendResponse(res, {
+      statusCode: httpStatus.CREATED,
+      success: true,
+      message: "User logged out successfully",
+      data: null,
+    });
+  }
+);
+
 export const AuthController = {
     credentialsLogin,
-    getNewAccessToken
+    getNewAccessToken,
+    logoutUser,
 }
