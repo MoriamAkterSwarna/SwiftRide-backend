@@ -1,50 +1,53 @@
 import AppError from "../../ErrorHelpers/appError";
-import { IAuthProvider,  IUser, Role } from "./user.interface";
+import { IAuthProvider, IUser, Role } from "./user.interface";
 import { User } from "./user.model";
-import  httpStatus  from 'http-status-codes';
-import bcryptjs from 'bcryptjs';
+import httpStatus from "http-status-codes";
+import bcryptjs from "bcryptjs";
 import { envVars } from "../../config/env";
 import { JwtPayload } from "jsonwebtoken";
 
+const createUser = async (payload: Partial<IUser>): Promise<IUser> => {
+  const { email, password, ...rest } = payload;
+  //   const user = await User.create({  email, ...rest});
 
-const createUser = async(payload : Partial<IUser>) : Promise<IUser> => {
+  const hashedPassword = await bcryptjs.hash(
+    password as string,
+    Number(envVars.BCRYPT_SALT_ROUNDS)
+  );
 
-     const {  email ,password,  ...rest} = payload;
-    //   const user = await User.create({  email, ...rest});
+  const isUserExist = await User.findOne({ email });
+  if (isUserExist) {
+    throw new AppError(httpStatus.CONFLICT, "User already exists");
+  }
 
-    const hashedPassword = await bcryptjs.hash(password as string,envVars.BCRYPT_SALT_ROUNDS as string);
+  const authProvider: IAuthProvider = {
+    provider: "credentials",
+    providerId: email as string,
+  };
 
+  const user = await User.create({
+    email,
+    password: hashedPassword,
+    auth: [authProvider],
+    ...rest,
+  });
 
-      const isUserExist = await User.findOne({ email });
-      if(isUserExist){
-        throw new AppError(httpStatus.CONFLICT, 'User already exists');
-      }
+  return user;
+};
 
-
-      const authProvider:IAuthProvider = {
-        provider: 'credentials',
-        providerId: email as string
-      };
-
-
-        const user = await User.create({ email,
-            password: hashedPassword,
-            auth: [authProvider],
-            ...rest});
-
-      return user;
-}
-
-const updateUser = async( userId: string, payload: Partial<IUser>, decodedToken:JwtPayload)  => {
-
+const updateUser = async (
+  userId: string,
+  payload: Partial<IUser>,
+  decodedToken: JwtPayload
+) => {
   const ifUserExist = await User.findById(userId);
-  if(!ifUserExist){
-    throw new AppError(httpStatus.NOT_FOUND, 'User not found');
+  if (!ifUserExist) {
+    throw new AppError(httpStatus.NOT_FOUND, "User not found");
   }
 
   // if(ifUserExist.isDeleted){
   //   throw new AppError(httpStatus.BAD_REQUEST, 'User is deleted. Cannot update deleted user');
-  // } 
+  // }
 
   // if(ifUserExist.isActive === IsActive.BLOCKED ){
   //   throw new AppError(httpStatus.BAD_REQUEST, 'User is deactivated. Cannot update deactivated user');
@@ -59,54 +62,58 @@ const updateUser = async( userId: string, payload: Partial<IUser>, decodedToken:
   
   */
 
-
-  if(payload.role){
-    if(decodedToken.role  === Role.USER || decodedToken.role === Role.DRIVER ){
-      throw new AppError(httpStatus.FORBIDDEN, 'You are not authorized to update role');
+  if (payload.role) {
+    if (decodedToken.role === Role.USER || decodedToken.role === Role.DRIVER) {
+      throw new AppError(
+        httpStatus.FORBIDDEN,
+        "You are not authorized to update role"
+      );
     }
-    if(decodedToken.role === Role.ADMIN && payload.role === Role.SUPER_ADMIN){
-      throw new AppError(httpStatus.FORBIDDEN, 'You are not authorized to update role to SUPER_ADMIN');
+    if (decodedToken.role === Role.ADMIN && payload.role === Role.SUPER_ADMIN) {
+      throw new AppError(
+        httpStatus.FORBIDDEN,
+        "You are not authorized to update role to SUPER_ADMIN"
+      );
     }
-
   }
-    if(payload.isActive || payload.isDeleted || payload.isVerified){
-      if (
-        decodedToken.role === Role.USER ||
-        decodedToken.role === Role.DRIVER
-      ) {
-        throw new AppError(
-          httpStatus.FORBIDDEN,
-          "You are not authorized to update role"
-        );
-      }
+  if (payload.isActive || payload.isDeleted || payload.isVerified) {
+    if (decodedToken.role === Role.USER || decodedToken.role === Role.DRIVER) {
+      throw new AppError(
+        httpStatus.FORBIDDEN,
+        "You are not authorized to update role"
+      );
     }
+  }
 
-    if(payload.password){
-      payload.password = await bcryptjs.hash(payload.password as string,envVars.BCRYPT_SALT_ROUNDS as string);
-       
-    }
+  if (payload.password) {
+    payload.password = await bcryptjs.hash(
+      payload.password as string,
+      Number(envVars.BCRYPT_SALT_ROUNDS)
+    );
+  }
 
-    const newUpdateUser = await User.findByIdAndUpdate(userId, payload, { new: true, runValidators: true });
-  
-    return newUpdateUser;
-}
+  const newUpdateUser = await User.findByIdAndUpdate(userId, payload, {
+    new: true,
+    runValidators: true,
+  });
 
-const getAllUsers = async()  => {
-    const users = await User.find({});
+  return newUpdateUser;
+};
 
-    const totalUsers = await User.countDocuments();
-    return{
-        data : users,
-        meta : {
-            total: totalUsers
-        }
-    }
-}
+const getAllUsers = async () => {
+  const users = await User.find({});
 
+  const totalUsers = await User.countDocuments();
+  return {
+    data: users,
+    meta: {
+      total: totalUsers,
+    },
+  };
+};
 
 export const UserServices = {
-    createUser,
-    getAllUsers,
-    updateUser
-}
-
+  createUser,
+  getAllUsers,
+  updateUser,
+};
