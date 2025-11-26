@@ -2,7 +2,7 @@ import { Response } from "express";
 
 
 export interface AuthTokens{
-    accessToken: string;
+    accessToken?: string;
     refreshToken?: string;
 }
 

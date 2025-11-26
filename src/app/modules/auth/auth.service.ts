@@ -108,13 +108,46 @@ const newAccessToken = await createNewAccessTokenWithRefreshToken(refreshToken);
 
 
 return {
-    accessToken: newAccessToken.accessToken
+    accessToken: newAccessToken
 
 };
 
 
 };
+
+const resetPassword = async (oldPassword: string, newPassword: string, decodedToken: JwtPayload) => {
+  const user = await User.findById(decodedToken.userId);
+
+  if (!user) {
+    throw new AppError(httpStatus.NOT_FOUND, "User not found");
+  }
+
+  if (!user.password) {
+    throw new AppError(
+      httpStatus.BAD_REQUEST,
+      "User does not have a password set"
+    );
+  }
+
+  const isOldPasswordMatch = await bcryptjs.compare(
+    oldPassword,
+    user.password as string
+  );
+  if (!isOldPasswordMatch) {
+    throw new AppError(httpStatus.UNAUTHORIZED, "Old Password does not match");
+  }
+
+  user.password = await bcryptjs.hash(
+    newPassword,
+    Number(envVars.BCRYPT_SALT_ROUNDS)
+  );
+
+  await user.save();
+}
+
+
 export const AuthService = {
     credentialsLogin,
     getNewAccessToken,
+    resetPassword,
 }
