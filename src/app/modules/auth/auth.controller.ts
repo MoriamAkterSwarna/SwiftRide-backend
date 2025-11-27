@@ -7,6 +7,8 @@ import { AuthService } from "./auth.service";
 import AppError from "../../ErrorHelpers/appError";
 import { setAuthCookie } from "../../utils/setCookie";
 import { JwtPayload } from "jsonwebtoken";
+import { createUserTokens } from "../../utils/userTokens";
+import { envVars } from "../../config/env";
 
 const credentialsLogin = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
@@ -117,9 +119,42 @@ const resetPassword = catchAsync(
   }
 );
 
+const googleCallbackController = catchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+
+    let redirectTo = req.query.redirectTo ? req.query.redirectTo as string : '';
+    
+    if(redirectTo.startsWith("/")){
+      redirectTo = redirectTo.slice(1);
+    }
+
+
+    const user = req.user;
+
+    console.log(user)
+    if(!user){
+      throw new AppError(httpStatus.UNAUTHORIZED, "Google authentication failed");
+    }
+    
+    const tokenInfo =  createUserTokens(user);
+    setAuthCookie(res, tokenInfo);
+
+    // sendResponse(res, {
+    //   statusCode: httpStatus.OK,
+    //   success: true,
+    //   message: "Google authentication successful",
+    //   data: user,
+    // }); 
+
+    res.redirect(`${envVars.FRONTEND_URL}/${redirectTo}`);
+
+  }
+);
+
 export const AuthController = {
   credentialsLogin,
   getNewAccessToken,
   logoutUser,
   resetPassword,
+  googleCallbackController,
 };
