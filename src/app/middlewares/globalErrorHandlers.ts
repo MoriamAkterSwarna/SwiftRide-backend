@@ -43,7 +43,20 @@ export const globalErrorHandlers=((err:any, req:Request, res:Response,next:NextF
       // console.log(errorSources); 
       message = err.message;
     }
-    else if (err instanceof AppError){
+    else if (err.name === "ZodError"){
+
+        statusCode = 400;
+        const errors = err.issues;
+        err.forEach((el: any) => {
+          errorSources.push({
+            path: el.path[el.path.length - 1]  ,
+            //path : nickname inside lastname inside name 
+            
+            message: el.message,
+          });
+        });
+
+    } else if (err instanceof AppError){
         statusCode = err.statusCode;
         message = err.message;
     }else if(err instanceof Error){
