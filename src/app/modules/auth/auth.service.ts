@@ -14,15 +14,15 @@ const credentialsLogin = async(payload: Partial<IUser>) => {
     
     const { email, password } = payload;
     // Add your login logic here (e.g., verify user credentials, generate tokens, etc.)
-    const isUserExist = await User.findOne({ email });
-    if(!isUserExist){
-        throw new AppError(httpStatus.UNAUTHORIZED, 'User does not exist');
-    }
+    // const isUserExist = await User.findOne({ email });
+    // if(!isUserExist){
+    //     throw new AppError(httpStatus.UNAUTHORIZED, 'User does not exist');
+    // }
     // You would typically compare the provided password with the stored hashed password here.
-    const isPasswordMatched = await bcryptjs.compare(password as string, isUserExist.password as string);
-    if(!isPasswordMatched){
-        throw new AppError(httpStatus.UNAUTHORIZED, 'Invalid credentials');
-    }
+    // const isPasswordMatched = await bcryptjs.compare(password as string, isUserExist.password as string);
+    // if(!isPasswordMatched){
+    //     throw new AppError(httpStatus.UNAUTHORIZED, 'Invalid credentials');
+    // }
 
     // const jwtPayload = {
     //   userId: isUserExist._id,
@@ -42,19 +42,19 @@ const credentialsLogin = async(payload: Partial<IUser>) => {
     //   envVars.JWT_REFRESH_EXPIRATION
     // );
 
-    const userTokens = createUserTokens(isUserExist);
+    // const userTokens = createUserTokens(isUserExist);
 
  
     // delete isUserExist.password; 
 
-    const {password: pass , ...rest} = isUserExist.toObject();
+    // const {password: pass , ...rest} = isUserExist.toObject();
 
-    return {
+    // return {
        
-        accessToken: userTokens.accessToken,
-        refreshToken: userTokens.refreshToken,
-        user: rest,
-    }
+    //     accessToken: userTokens.accessToken,
+    //     refreshToken: userTokens.refreshToken,
+    //     user: rest,
+    // }
 
 }
 

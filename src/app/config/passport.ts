@@ -4,7 +4,50 @@ import { Strategy as GoogleStrategy, Profile, VerifyCallback } from "passport-go
 import { envVars } from "./env";
 import { User } from "../modules/user/user.model";
 import { Role } from "../modules/user/user.interface";
+import { Strategy as LocalStrategy } from "passport-local";
+import  bcryptjs  from 'bcryptjs';
 
+
+
+passport.use(
+    new LocalStrategy({
+        usernameField: 'email',
+        passwordField: 'password',
+    }, async(email:string, password:string, done)=>{
+
+        try {
+
+            const isUserExist =  await User.findOne({ email: email });
+            if(!isUserExist){
+                return done(null, false, { message: "User not found" });
+            }
+            const isGoogleAuthenticated = isUserExist.auth?.some((auth) => auth.provider === "google");
+            if (isGoogleAuthenticated) {
+              return done(null, false, { message: "Please log in using Google OAuth" });
+            }
+
+            const isPasswordMatched = await bcryptjs.compare(
+              password as string,
+              isUserExist.password as string
+            );
+            if (!isPasswordMatched) {
+              return done(
+                null,
+                false,
+                { message: "Invalid credentials" }
+              );
+            }
+
+            return done(null, isUserExist);
+
+        }
+        catch (error) {
+            console.log(error)
+            done(error);
+        }
+
+    })
+)
 
 passport.use(
     new GoogleStrategy(

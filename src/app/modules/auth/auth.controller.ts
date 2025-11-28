@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { NextFunction, Request, Response } from "express";
 import { catchAsync } from "../../utils/catchAsync";
@@ -9,10 +10,12 @@ import { setAuthCookie } from "../../utils/setCookie";
 import { JwtPayload } from "jsonwebtoken";
 import { createUserTokens } from "../../utils/userTokens";
 import { envVars } from "../../config/env";
+import passport from "passport";
 
 const credentialsLogin = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
-    const loginInfo = await AuthService.credentialsLogin(req.body);
+    
+    // const loginInfo = await AuthService.credentialsLogin(req.body);
 
     // res.cookie('accessToken', loginInfo.accessToken, {
     //   httpOnly: true,
@@ -25,14 +28,44 @@ const credentialsLogin = catchAsync(
 
     // });
 
-    setAuthCookie(res, loginInfo);
+    passport.authenticate("local", async(err:any, user:any, info:any)=>{
 
-    sendResponse(res, {
-      statusCode: httpStatus.CREATED,
-      success: true,
-      message: "User Logged in successfully",
-      data: loginInfo,
-    });
+      if(err){
+        return next(err);
+      }
+
+      if(!user){
+        return next(new AppError(httpStatus.UNAUTHORIZED, info.message || 'Login failed'));
+      }
+
+      const userTokens =  createUserTokens(user);
+
+      // delete user.toObject().password;
+      const {password: pass , ...rest} = user.toObject();
+
+      setAuthCookie(res, userTokens);
+
+      sendResponse(res, {
+        statusCode: httpStatus.CREATED,
+        success: true,
+        message: "User Logged in successfully",
+        data: {
+          accessToken: userTokens.accessToken,
+          refreshToken: userTokens.refreshToken,
+          user: rest,
+        },
+      });
+
+    })(req, res, next);
+
+    // setAuthCookie(res, loginInfo);
+
+    // sendResponse(res, {
+    //   statusCode: httpStatus.CREATED,
+    //   success: true,
+    //   message: "User Logged in successfully",
+    //   data: loginInfo,
+    // });
   }
 );
 const getNewAccessToken = catchAsync(
