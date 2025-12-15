@@ -1,17 +1,26 @@
 import { model, Schema } from "mongoose";
-import { IRide, IRideType } from "./ride.interface";
+import { IRide, IRideType, RideVehicle, PlaceType, totalGuest, RideStatus } from "./ride.interface";
 
-const rideTypeSchema = new Schema<IRideType>({
-    rideName: {
+export const RideTypeSchema = new Schema<IRideType>({
+    rideVehicle: {
         type: String,
         required: true,
-        unique: true
+        enum: Object.values(RideVehicle)
+    },
+    placeType: {
+        type: String,
+        required: true,
+        enum: Object.values(PlaceType)
+    },
+    totalGuest: {
+        type: Number,
+        enum: Object.values(totalGuest).filter(v => typeof v === 'number')
     }
 }, {
     timestamps: true
 })
 
-export const RideType = model<IRideType>("RideType", rideTypeSchema)
+export const RideType = model<IRideType>("RideType", RideTypeSchema)
 
 const rideSchema = new Schema<IRide>({
     title: {
@@ -33,12 +42,24 @@ const rideSchema = new Schema<IRide>({
 
     },
     pickUpLocation: {
-        type: String,
-
+        address: {
+            type: String,
+            required: true
+        },
+        coordinates: {
+            latitude: { type: Number },
+            longitude: { type: Number }
+        }
     },
     dropOffLocation: {
-        type: String,
-
+        address: {
+            type: String,
+            required: true
+        },
+        coordinates: {
+            latitude: { type: Number },
+            longitude: { type: Number }
+        }
     },
     pickUpTime: {
         type: Date,
@@ -71,6 +92,12 @@ const rideSchema = new Schema<IRide>({
         required: true,
 
     },
+    district: {
+        type: Schema.Types.ObjectId,
+        ref: "District",
+        required: true,
+
+    },
     rideType: {
         type: Schema.Types.ObjectId,
         ref: "RideType",
@@ -80,9 +107,61 @@ const rideSchema = new Schema<IRide>({
     availableSeats: {
         type: Number,
 
+    },
+    driver: {
+        type: Schema.Types.ObjectId,
+        ref: "User",
+
+    },
+    status: {
+        type: String,
+        enum: Object.values(RideStatus),
+        default: RideStatus.ACTIVE
+
+    },
+    vehicle: {
+        type: String,
+        enum: Object.values(RideVehicle),
+
     }
 }, {
     timestamps: true
+})
+
+/* eslint-disable @typescript-eslint/no-explicit-any */
+rideSchema.pre("save", async function (next: any) {
+    if (this.isModified("title")) {
+        const baseSlug = this.title.toLowerCase().split(" ").join("-")
+        let slug = `${baseSlug}-ride`
+
+        let counter = 0;
+        while (await Ride.exists({ slug })) {
+            slug = `${baseSlug}-ride-${counter++}`
+        }
+
+        this.slug = slug;
+    }
+    next()
+})
+
+rideSchema.pre("findOneAndUpdate", async function (next: any) {
+    const ride = this.getUpdate() as IRide
+
+    if (ride.title) {
+        const baseSlug = ride.title.toLowerCase().split(" ").join("-")
+        let slug = `${baseSlug}-ride`
+
+        let counter = 0;
+        while (await Ride.exists({ slug })) {
+            slug = `${baseSlug}-ride-${counter++}`
+        }
+
+        ride.slug = slug
+    }
+
+    this.setUpdate(ride)
+
+    next()
 })
 
 export const Ride = model<IRide>("Ride", rideSchema) 
