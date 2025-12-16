@@ -69,7 +69,9 @@ const createRide = catchAsync(async (req: Request, res: Response) => {
 });
 
 const getAllRides = catchAsync(async (req: Request, res: Response) => {
-    const result = await RideService.getAllRides(req.query);
+
+    const query = req.query;
+    const result = await RideService.getAllRides(query as Record<string, string>);
     sendResponse(res, {
         statusCode: 200,
         success: true,
