@@ -15,7 +15,7 @@ const createDistrict = catchAsync(async (req: Request, res: Response) => {
 });
 
 const getAllDistricts = catchAsync(async (req: Request, res: Response) => {
-    const result = await DistrictService.getAllDistricts();
+    const result = await DistrictService.getAllDistricts(req.query);
     sendResponse(res, {
         statusCode: 200,
         success: true,

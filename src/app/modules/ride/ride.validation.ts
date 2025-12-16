@@ -23,7 +23,7 @@ const locationSchema = z.object({
 });
 
 export const createRideSchema = z.object({
-    title: z.string().min(1),
+    title: z.string(),
     description: z.string().optional(),
     images: z.array(z.string()).optional(),
     pickUpLocation: locationSchema,

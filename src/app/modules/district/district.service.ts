@@ -1,3 +1,6 @@
+/* eslint-disable @typescript-eslint/no-dynamic-delete */
+import { excludeField } from "../../utils/constant";
+import { districtSearchableFields } from "./district.constant";
 import { IDistrict } from "./district.interface";
 import { District } from "./district.model";
 
@@ -13,9 +16,24 @@ const createDistrict = async (payload: IDistrict) => {
     return district
 };
 
-const getAllDistricts = async () => {
-    const districts = await District.find({}).populate('division');
-    const totalDistricts = await District.countDocuments();
+const getAllDistricts = async (query: Record<string, unknown>) => {
+    const queryObj: Record<string, unknown> = {};
+
+    const searchTerm = query.searchTerm as string || "";
+    const sortData = query.sortData as string || "createdAt";
+
+    for (const key of excludeField) {
+        delete queryObj[key];
+    }
+
+    const searchQuery = {
+        $or: districtSearchableFields.map(field => ({
+            [field]: { $regex: searchTerm, $options: 'i' }
+        }))
+    }
+
+    const districts = await District.find(searchQuery).find(queryObj).sort(sortData).populate('division');
+    const totalDistricts = await District.countDocuments(searchQuery);
     return {
         data: districts,
         meta: {

@@ -1,3 +1,6 @@
+/* eslint-disable @typescript-eslint/no-dynamic-delete */
+import { excludeField } from "../../utils/constant";
+import { rideSearchableFields } from "./ride.constant";
 import { IRide, IRideType } from "./ride.interface";
 import { Ride, RideType } from "./ride.model";
 
@@ -63,17 +66,53 @@ const createRide = async (payload: IRide) => {
 const getAllRides = async (query: Record<string, unknown>) => {
     const queryObj: Record<string, unknown> = {};
 
+    // filter by district
     if (query.district) {
         queryObj.district = query.district;
     }
 
-    const rides = await Ride.find(queryObj)
-        .populate('division')
-        .populate('district')
-        .populate('rideType')
-        .populate('driver');
+    // const rides = await Ride.find(queryObj)
+
+    const searchTerm = query.searchTerm as string  || "";
+
+    const sortData = query.sortData as string || "createdAt";
+
+    const fields = (query.fields as string )?.split(",").join(" ") || "";
+    console.log(fields);
+
+    // delete queryObj["searchTerm"];
+    // delete queryObj["sortData"];
+
+    // const rideSearchableFields = ['title', 'description', 'pickupLocation'];
+   
+    // const searchArray = rideSearchableFields.map(field => ({
+    //     [field]: {$regex: searchTerm, $options: 'i' }
+    // }))
+
+    // const excludeField = ['searchTerm', 'sortData']; 
+
+    for(const key of excludeField){
+        delete queryObj[key];
+    }
+
+    const searchQuery = {
+        $or: rideSearchableFields.map(field => ({
+            [field]: {$regex: searchTerm, $options: 'i' }
+        }))
+    }
+    const rides = await Ride.find(
+        // { title: {$regex: searchTerm , $options: 'i' } }
+        // { $or: [
+        //     { title: { $regex: searchTerm, $options: 'i' } },
+        //     { description: { $regex: searchTerm, $options: 'i' } },
+        // ]}
     
-    const totalRides = await Ride.countDocuments(queryObj);
+        // {$or: searchArray}  
+        searchQuery
+    ).find(queryObj).sort(sortData).select(fields)
+        
+    
+    const totalRides = await Ride.countDocuments(queryObj).sort({ [sortData]: -1 })
     return {
         data: rides,
         meta: {

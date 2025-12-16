@@ -1,3 +1,6 @@
+/* eslint-disable @typescript-eslint/no-dynamic-delete */
+import { excludeField } from "../../utils/constant";
+import { divisionSearchableFields } from "./division.constant";
 import { IDivision } from "./division.interface";
 import { Division } from "./division.model";
 
@@ -24,9 +27,25 @@ const createDivision = async (payload: IDivision) => {
     return division
 };
 
-const getAllDivisions = async () => {
-    const divisions = await Division.find({});
-    const totalDivisions = await Division.countDocuments();
+const getAllDivisions = async (query: Record<string, unknown>) => {
+
+    const queryObj: Record<string, unknown> = {};
+
+    const searchTerm = query.searchTerm as string || "";
+    const sortData = query.sortData as string || "createdAt";
+
+    for (const key of excludeField) {
+        delete queryObj[key];
+    }
+
+    const searchQuery = {
+        $or: divisionSearchableFields.map(field => ({
+            [field]: { $regex: searchTerm, $options: 'i' }
+        }))
+    }
+
+    const divisions = await Division.find(searchQuery).find(queryObj).sort(sortData);
+    const totalDivisions = await Division.countDocuments(searchQuery);
     return {
         data: divisions,
         meta: {
