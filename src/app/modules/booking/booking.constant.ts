@@ -1,0 +1,1 @@
+export const bookingSearchableFields = ["status"]

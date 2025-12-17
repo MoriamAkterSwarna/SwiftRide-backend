@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-empty-function */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import { Booking } from "./booking.model";
@@ -12,6 +11,8 @@ import { Payment } from "../payment/payment.model";
 import { Ride } from "../ride/ride.model";
 import { ISSLCommerz } from "../sslcommerz/sslcommerz.interface";
 import { SSLCommerzService } from "../sslcommerz/sslcommerz.service";
+import { QueryBuilder } from "../../utils/QueryBuilder";
+import { bookingSearchableFields } from "./booking.constant";
 
 const getTransactionId = () => {
   return `tran_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
@@ -80,24 +81,22 @@ const createBooking = async (payload: Partial<IBooking>, userId: string) => {
     const userName = (updatedBooking?.user as any).name;
 
     const sslPayload: ISSLCommerz = {
-            address: userAddress,
-            email: userEmail,
-            phoneNumber: userPhoneNumber,
-            name: userName,
-            amount: amount,
-            transactionId: transactionId
-        }
-        const sslPayment = await SSLCommerzService.sslPaymentInit(sslPayload);
-
-
+      address: userAddress,
+      email: userEmail,
+      phoneNumber: userPhoneNumber,
+      name: userName,
+      amount: amount,
+      transactionId: transactionId,
+    };
+    const sslPayment = await SSLCommerzService.sslPaymentInit(sslPayload);
 
     await session.commitTransaction();
     session.endSession();
 
     return {
       booking: updatedBooking,
-      paymentUrl: sslPayment.GatewayPageURL
-    }
+      paymentUrl: sslPayment.GatewayPageURL,
+    };
   } catch (error: any) {
     await session.abortTransaction();
     session.endSession();
@@ -107,18 +106,64 @@ const createBooking = async (payload: Partial<IBooking>, userId: string) => {
   }
 };
 
-const getUserBookings = async () => {
+const getAllBookings = async (query: Record<string, string>) => {
+  const queryBuilder = new QueryBuilder(Booking.find(), query);
 
+  const result = queryBuilder
+    .search(bookingSearchableFields)
+    .filter()
+    .sort()
+    .fields()
+    .pagination();
+
+  const [data, meta] = await Promise.all([
+    result.build(),
+    queryBuilder.getMeta(),
+  ]);
+
+  return {
+    data,
+    meta,
+  };
 };
 
-const getSingleBooking = async () => {};
+const getUserBookings = async (
+  query: Record<string, string>,
+  userId: string
+) => {
+  const queryBuilder = new QueryBuilder(Booking.find({ user: userId }), query);
 
-const updateBookingStatus = async (
+  const result = queryBuilder
+    .search(bookingSearchableFields)
+    .filter()
+    .sort()
+    .fields()
+    .pagination();
 
-) => {};
+  const [data, meta] = await Promise.all([
+    result.build(),
+    queryBuilder.getMeta(),
+  ]);
+
+  return {
+    data,
+    meta,
+  };
+};
+
+const getSingleBooking = async (id: string) => {
+  const result = await Booking.findById(id)
+  return result;
+};
+
+const updateBookingStatus = async (id: string, status: string) => {
+  const result = await Booking.findByIdAndUpdate(id, { status }, { new: true });
+  return result;
+};
 
 export const BookingServices = {
   createBooking,
+  getAllBookings,
   getUserBookings,
   getSingleBooking,
   updateBookingStatus,
