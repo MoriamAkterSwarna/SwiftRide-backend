@@ -18,31 +18,31 @@ const createBooking = catchAsync(async (req: Request, res: Response) => {
 
 const getUserBookings = catchAsync(
     async (req: Request, res: Response) => {
-        const bookings = await BookingServices.getUserBookings();
+    
         sendResponse(res, {
             statusCode: 200,
             success: true,
             message: "Bookings retrieved successfully",
-            data: bookings,
+            data: {},
         });
     }
 );
 const getSingleBooking = catchAsync(
     async (req: Request, res: Response) => {
-        const booking = await BookingServices.getSingleBookingFromDB();
+       
         sendResponse(res, {
             statusCode: 200,
             success: true,
             message: "Booking retrieved successfully",
-            data: booking,
+            data: {},
         });
     }
 );
 
 const getAllBookings = catchAsync(
     async (req: Request, res: Response) => {
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const bookings = await BookingServices.getAllBookingsFromDB();
+       
+
         sendResponse(res, {
             statusCode: 200,
             success: true,
@@ -56,13 +56,12 @@ const getAllBookings = catchAsync(
 const updateBookingStatus = catchAsync(
     async (req: Request, res: Response) => {
 
-        const updated = await BookingServices.updateBookingStatus(
-        );
+        
         sendResponse(res, {
             statusCode: 200,
             success: true,
             message: "Booking Status Updated Successfully",
-            data: updated,
+            data: {},
         });
     }
 );
