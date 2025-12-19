@@ -111,4 +111,4 @@ export const globalErrorHandlers = async(err: any, req: Request, res: Response, 
     err: envVars.NODE_ENV === "development" ? err : null,
     stack: envVars.NODE_ENV === "development" ? err.stack : null,
   })
-});
+};

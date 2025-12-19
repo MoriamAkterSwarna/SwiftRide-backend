@@ -139,7 +139,12 @@ const getSingleRide = catchAsync(async (req: Request, res: Response) => {
 
 const updateRide = catchAsync(async (req: Request, res: Response) => {
     const id = req.params.id;
-    const result = await RideService.updateRide(id, req.body);
+
+        const payload : IRide = {
+        ...req.body,
+        images : (req.files as Express.Multer.File[])?.map((file : any) => file.path)
+    }
+    const result = await RideService.updateRide(id, payload);
     sendResponse(res, {
         statusCode: 200,
         success: true,

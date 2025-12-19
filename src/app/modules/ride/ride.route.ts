@@ -50,6 +50,7 @@ router.get("/:slug", RideController.getSingleRide);
 router.patch(
     "/:id",
     checkAuth(Role.ADMIN, Role.SUPER_ADMIN, Role.USER),
+    multerUpload.array("files"),
     validateRequest(updateRideSchema),
     RideController.updateRide
 );

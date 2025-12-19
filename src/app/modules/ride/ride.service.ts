@@ -1,7 +1,10 @@
+/* eslint-disable @typescript-eslint/no-unused-expressions */
 import { rideSearchableFields } from "./ride.constant";
 import { IRide, IRideType } from "./ride.interface";
 import { Ride, RideType } from "./ride.model";
 import { QueryBuilder } from "../../utils/QueryBuilder";
+import { deleteImageFromCloudinary } from "../../config/cloudinary.config";
+
 
 // RideType Services
 const createRideType = async (payload: IRideType) => {
@@ -156,6 +159,26 @@ const updateRide = async (id: string, payload: Partial<IRide>) => {
     }
   }
 
+  if (payload.images && payload.images.length > 0 && existingRide.images && existingRide.images.length > 0) {
+      
+
+    payload.images = [
+      ...existingRide.images,
+      ...payload.images
+    ]
+    }
+
+    if(payload.deleteImages && payload.deleteImages.length > 0 && existingRide.images && existingRide.images.length > 0){
+        const restDBImages = existingRide.images.filter(imageUrl => {
+          !payload.deleteImages?.includes(imageUrl)
+        })
+        const updatedPayloadImages = (payload.images || [])
+            .filter(imageUrl => !payload.deleteImages?.includes(imageUrl))
+            .filter(imageUrl => !restDBImages.includes(imageUrl))
+
+        payload.images = [...restDBImages, ...updatedPayloadImages]
+    }
+
   const updatedRide = await Ride.findByIdAndUpdate(id, payload, {
     new: true,
     runValidators: true,
@@ -164,6 +187,11 @@ const updateRide = async (id: string, payload: Partial<IRide>) => {
     .populate("district")
     .populate("rideType")
     .populate("driver");
+
+
+    if (payload.deleteImages && payload.deleteImages.length > 0 && existingRide.images && existingRide.images.length > 0) {
+        await Promise.all(payload.deleteImages.map(url => deleteImageFromCloudinary(url)))
+    }
 
   return updatedRide;
 };

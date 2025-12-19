@@ -1,3 +1,4 @@
+import { deleteImageFromCloudinary } from "../../config/cloudinary.config";
 import { QueryBuilder } from "../../utils/QueryBuilder";
 import { districtSearchableFields } from "./district.constant";
 import { IDistrict } from "./district.interface";
@@ -73,6 +74,10 @@ const updateDistrict = async (id: string, payload: Partial<IDistrict>) => {
     new: true,
     runValidators: true,
   });
+
+  if (payload.thumbnail && existingDistrict.thumbnail) {
+    await deleteImageFromCloudinary(existingDistrict.thumbnail);
+  }
 
   return updatedDistrict;
 };

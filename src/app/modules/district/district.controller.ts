@@ -8,7 +8,7 @@ const createDistrict = catchAsync(async (req: Request, res: Response) => {
 
   const payload = {
     ...req.body,
-    image : req.file?.path
+    thumbnail : req.file?.path
   }
   const result = await DistrictService.createDistrict(payload);
   sendResponse(res, {
@@ -59,7 +59,12 @@ const getSingleDistrict = catchAsync(async (req: Request, res: Response) => {
 const updateDistrict = catchAsync(async (req: Request, res: Response) => {
   const id = req.params.id;
 
-  const result = await DistrictService.updateDistrict(id, req.body);
+  const payload = {
+    ...req.body,
+    thumbnail : req.file?.path
+  }
+
+  const result = await DistrictService.updateDistrict(id, payload);
   sendResponse(res, {
     statusCode: 200,
     success: true,

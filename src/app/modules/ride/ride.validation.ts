@@ -62,4 +62,5 @@ export const updateRideSchema = z.object({
     driver: z.string().optional(),
     status: z.enum(["Active", "Completed", "Cancelled"]).optional(),
     vehicle: z.enum(["Bike", "Car"]).optional(),
+    deleteImages: z.array(z.string()).optional(),
 });
