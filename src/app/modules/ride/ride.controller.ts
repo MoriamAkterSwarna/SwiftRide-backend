@@ -1,7 +1,9 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Request, Response } from "express";
 import { catchAsync } from "../../utils/catchAsync";
 import { sendResponse } from "../../utils/sendResponse";
 import { RideService } from "./ride.service";
+import { IRide } from "./ride.interface";
 
 // RideType Controllers
 const createRideType = catchAsync(async (req: Request, res: Response) => {
@@ -59,7 +61,17 @@ const deleteRideType = catchAsync(async (req: Request, res: Response) => {
 
 // Ride Controllers
 const createRide = catchAsync(async (req: Request, res: Response) => {
-    const result = await RideService.createRide(req.body);
+
+    console.log({
+        files : req.files,
+        body : req.body
+    })
+
+    const payload : IRide = {
+        ...req.body,
+        images : (req.files as Express.Multer.File[])?.map((file : any) => file.path)
+    }
+    const result = await RideService.createRide(payload);
     sendResponse(res, {
         statusCode: 201,
         success: true,

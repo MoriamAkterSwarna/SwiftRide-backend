@@ -9,6 +9,7 @@ import {
     createRideSchema,
     updateRideSchema,
 } from "./ride.validation";
+import { multerUpload } from "../../config/multer.config";
 
 const router = Router();
 
@@ -37,6 +38,7 @@ router.delete(
 router.post(
     "/create",
     checkAuth(Role.ADMIN, Role.SUPER_ADMIN, Role.USER),
+    multerUpload.array("files"),
     validateRequest(createRideSchema),
     RideController.createRide
 );
