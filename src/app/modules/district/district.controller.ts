@@ -5,7 +5,12 @@ import { sendResponse } from "../../utils/sendResponse";
 import { DistrictService } from "./district.service";
 
 const createDistrict = catchAsync(async (req: Request, res: Response) => {
-  const result = await DistrictService.createDistrict(req.body);
+
+  const payload = {
+    ...req.body,
+    image : req.file?.path
+  }
+  const result = await DistrictService.createDistrict(payload);
   sendResponse(res, {
     statusCode: 201,
     success: true,
