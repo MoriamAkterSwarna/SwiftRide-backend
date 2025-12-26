@@ -1,9 +1,10 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { JwtPayload } from "jsonwebtoken";
 import { envVars } from "../../config/env";
 import { generateToken, verifyToken } from "../../utils/jwt";
 import { createNewAccessTokenWithRefreshToken, createUserTokens } from "../../utils/userTokens";
-import { IsActive, IUser } from "../user/user.interface"
+import { IAuthProvider, IsActive, IUser } from "../user/user.interface"
 import { User } from "../user/user.model";
 import  bcryptjs  from 'bcryptjs';
 import AppError from "../../ErrorHelpers/appError";
@@ -115,7 +116,7 @@ return {
 
 };
 
-const resetPassword = async (oldPassword: string, newPassword: string, decodedToken: JwtPayload) => {
+const changePassword = async (oldPassword: string, newPassword: string, decodedToken: JwtPayload) => {
   const user = await User.findById(decodedToken.userId);
 
   if (!user) {
@@ -144,10 +145,61 @@ const resetPassword = async (oldPassword: string, newPassword: string, decodedTo
 
   await user.save();
 }
+const resetPassword = async (payload: Record<string, any>, decodedToken: JwtPayload) => {
+  if (payload.id != decodedToken.userId) {
+        throw new AppError(401, "You can not reset your password")
+    }
+
+    const isUserExist = await User.findById(decodedToken.userId)
+    if (!isUserExist) {
+        throw new AppError(401, "User does not exist")
+    }
+
+    const hashedPassword = await bcryptjs.hash(
+        payload.newPassword,
+        Number(envVars.BCRYPT_SALT_ROUNDS)
+    )
+
+    isUserExist.password = hashedPassword;
+
+    await isUserExist.save()
+}
+const setPassword = async (userId: string, plainPassword: string) => {
+
+  const user = await User.findById(userId);
+
+  if (!user) {
+    throw new AppError(httpStatus.NOT_FOUND, "User not found");
+  }
+
+  if(user.password && user.auth.some(providerObject => providerObject.provider === "google") ){
+    throw new AppError(httpStatus.BAD_REQUEST, "User already has a password");
+  }
+
+  const hashedPassword = await bcryptjs.hash(
+    plainPassword,
+    Number(envVars.BCRYPT_SALT_ROUNDS)
+  );
+
+  const credentialProvider: IAuthProvider = {
+    provider: "credentials",
+    providerId: user.email
+  }
+
+  const auth: IAuthProvider[] = [...user.auth, credentialProvider]
+
+  user.password = hashedPassword;
+  user.auth = auth;
+
+  await user.save();
+  
+}
 
 
 export const AuthService = {
     credentialsLogin,
     getNewAccessToken,
+    changePassword,
     resetPassword,
+    setPassword
 }

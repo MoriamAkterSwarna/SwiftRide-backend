@@ -120,7 +120,7 @@ const logoutUser = catchAsync(
   }
 );
 
-const resetPassword = catchAsync(
+const changePassword = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
     const { oldPassword, newPassword } = req.body;
 
@@ -137,10 +137,57 @@ const resetPassword = catchAsync(
       throw new AppError(httpStatus.UNAUTHORIZED, "User not authenticated");
     }
 
-    await AuthService.resetPassword(
+    await AuthService.changePassword(
       oldPassword,
       newPassword,
       decodedToken as JwtPayload
+    );
+
+    sendResponse(res, {
+      statusCode: httpStatus.CREATED,
+      success: true,
+      message: "Password reset successfully",
+      data: null,
+    });
+  }
+);
+const resetPassword = catchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    
+
+    const decodedToken = req.user;
+
+    if (!decodedToken) {
+      throw new AppError(httpStatus.UNAUTHORIZED, "User not authenticated");
+    }
+
+    await AuthService.resetPassword(
+      req.body,
+      decodedToken as JwtPayload
+    );
+
+    sendResponse(res, {
+      statusCode: httpStatus.OK,
+      success: true,
+      message: "Password reset successfully",
+      data: null,
+    });
+  }
+);
+const setPassword = catchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const { password } = req.body;
+
+
+    const decodedToken = req.user as JwtPayload;
+
+    if (!decodedToken) {
+      throw new AppError(httpStatus.UNAUTHORIZED, "User not authenticated");
+    }
+
+    await AuthService.setPassword(
+      decodedToken.userId,
+      password
     );
 
     sendResponse(res, {
@@ -189,5 +236,7 @@ export const AuthController = {
   getNewAccessToken,
   logoutUser,
   resetPassword,
+  changePassword,
+  setPassword,
   googleCallbackController,
 };
