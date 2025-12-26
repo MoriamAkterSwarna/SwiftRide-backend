@@ -9,7 +9,8 @@ import { User } from "../user/user.model";
 import  bcryptjs  from 'bcryptjs';
 import AppError from "../../ErrorHelpers/appError";
 import  httpStatus  from 'http-status-codes';
-
+import { sendEmail } from "../../utils/sendEmail";
+import jwt from 'jsonwebtoken';
 
 const credentialsLogin = async(payload: Partial<IUser>) => {
     
@@ -195,11 +196,64 @@ const setPassword = async (userId: string, plainPassword: string) => {
   
 }
 
+const forgotPassword = async (email: string) => {
+  const isUserExist = await User.findOne({ email });
+
+  if (!isUserExist) {
+    throw new AppError(httpStatus.NOT_FOUND, "User not found");
+  }
+  if (
+            isUserExist.isActive === IsActive.BLOCKED ||
+            isUserExist.isActive === IsActive.INACTIVE
+          ) {
+            throw new AppError(
+              httpStatus.UNAUTHORIZED,
+              `User is ${isUserExist.isActive}`
+            );
+          }
+      
+          if (isUserExist.isDeleted) {
+            throw new AppError(httpStatus.UNAUTHORIZED, "User is deleted");
+          }
+  
+          if( !isUserExist.isVerified){
+            throw new AppError(httpStatus.UNAUTHORIZED, "User is not verified");
+          }
+
+  const jwtPayload = {
+    userId: isUserExist._id,
+    email: isUserExist.email,
+    role: isUserExist.role,
+  };
+
+  const resetToken = jwt.sign(
+    jwtPayload,
+    envVars.JWT_ACCESS_SECRET,
+    {
+      expiresIn: "10m",
+    }
+  );
+
+  const resetPasswordLink = `${envVars.FRONTEND_URL}/reset-password?id=${isUserExist._id}&token=${resetToken}`
+
+
+ sendEmail({
+    to: isUserExist.email,
+    subject: "Reset Password",
+    templateName: "reset-password",
+    templateData: {
+      name: isUserExist.name,
+      resetPasswordLink,
+    },
+  });
+}
+
 
 export const AuthService = {
     credentialsLogin,
     getNewAccessToken,
     changePassword,
     resetPassword,
-    setPassword
+    setPassword,
+    forgotPassword
 }

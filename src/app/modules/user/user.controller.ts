@@ -62,7 +62,7 @@ const getAllUsers = catchAsync(
       success: true,
       message: "Users retrieved successfully",
       data: result.data,
-      meta: result.meta,
+      meta: result?.meta,
     });
   }
 );
@@ -81,9 +81,26 @@ const getSingleUser = catchAsync(
   }
 );
 
+const getMe = catchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+
+    const decodedToken = req.user as JwtPayload;
+    const user = await UserServices.getMe(decodedToken.userId);
+
+    sendResponse(res, {
+      statusCode: httpStatus.OK,
+      success: true,
+      message: "User retrieved successfully",
+      data: user,
+    });
+  }
+);
+
+
 export const UserController = {
   createUser,
   getAllUsers,
   updateUser,
   getSingleUser,
+  getMe,
 };

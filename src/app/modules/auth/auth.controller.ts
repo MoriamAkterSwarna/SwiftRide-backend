@@ -31,11 +31,11 @@ const credentialsLogin = catchAsync(
     passport.authenticate("local", async(err:any, user:any, info:any)=>{
 
       if(err){
-        return next(err);
+        return next(new AppError(err.statusCode, err.message));
       }
 
       if(!user){
-        return next(new AppError(httpStatus.UNAUTHORIZED, info.message || 'Login failed'));
+        return next(new AppError(httpStatus.UNAUTHORIZED, err.message));
       }
 
       const userTokens =  createUserTokens(user);
@@ -231,6 +231,25 @@ const googleCallbackController = catchAsync(
   }
 );
 
+const forgotPassword = catchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const { email } = req.body;
+
+    if (!email) {
+      throw new AppError(httpStatus.BAD_REQUEST, "Email is required");
+    }
+
+    await AuthService.forgotPassword(email);
+
+    sendResponse(res, {
+      statusCode: httpStatus.OK,
+      success: true,
+      message: "Password reset email sent successfully",
+      data: null,
+    });
+  }
+);
+
 export const AuthController = {
   credentialsLogin,
   getNewAccessToken,
@@ -239,4 +258,5 @@ export const AuthController = {
   changePassword,
   setPassword,
   googleCallbackController,
+  forgotPassword
 };

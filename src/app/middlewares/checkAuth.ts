@@ -59,6 +59,10 @@ export const checkAuth= (...authRoles: string[]) =>async (req: Request, res: Res
           throw new AppError(httpStatus.UNAUTHORIZED, "User is deleted");
         }
 
+        if( !isUserExist.isVerified){
+          throw new AppError(httpStatus.UNAUTHORIZED, "User is not verified");
+        }
+
     if(!authRoles.includes((verifiedToken as JwtPayload).role)){
       throw new AppError(
         httpStatus.FORBIDDEN,
