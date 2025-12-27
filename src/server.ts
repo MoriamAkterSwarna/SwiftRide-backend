@@ -1,20 +1,16 @@
-import { Server,  } from "http";
+import { Server } from "http";
 
 import mongoose from "mongoose";
 import app from "./app";
 import { envVars } from "./app/config/env";
 import { seedSuperAdmin } from "./app/utils/seedSuperAdmin";
+import { connectRedis } from "./app/config/redis.config";
 
 let server: Server;
 
-
-
 const startServer = async () => {
   try {
- 
-    await mongoose.connect(
-      envVars.MONGODB_URL
-    );
+    await mongoose.connect(envVars.MONGODB_URL);
 
     console.log("Connect To DB");
 
@@ -27,74 +23,65 @@ const startServer = async () => {
     // mongoose.connection.close();
   }
 };
-(async() => {
+(async () => {
+  await connectRedis();
   await startServer();
+  await seedSuperAdmin();
+})();
 
-await seedSuperAdmin();
-})()
-
-
-
-
-
-
-/*  
-* unhandled rejection error 
-* uncaught rejection error
-* signal termination sigterm 
-*/
-
+/*
+ * unhandled rejection error
+ * uncaught rejection error
+ * signal termination sigterm
+ */
 
 process.on("unhandledRejection", (reason: Error) => {
   console.error("Unhandled Rejection at:", reason);
-    if (server) {
-        server.close(() => {
-            console.log("Server closed due to unhandled rejection");
-            process.exit(1);
-        });
-    } else {
-        process.exit(1);
-    }   
+  if (server) {
+    server.close(() => {
+      console.log("Server closed due to unhandled rejection");
+      process.exit(1);
+    });
+  } else {
+    process.exit(1);
+  }
 });
 
 // Promise.reject(new Error("I forgot to catch this promise"));
 
-
-
 process.on("uncaughtException", (err: Error) => {
-  console.error("Uncaught Exception thrown:", err); 
-    if (server) {
-        server.close(() => {
-            console.log("Server closed due to uncaught exception");
-            process.exit(1);
-        });
-    } else {
-        process.exit(1);
-    }
+  console.error("Uncaught Exception thrown:", err);
+  if (server) {
+    server.close(() => {
+      console.log("Server closed due to uncaught exception");
+      process.exit(1);
+    });
+  } else {
+    process.exit(1);
+  }
 });
 // throw new Error("This is an uncaught exception");
 
-
 process.on("SIGTERM", () => {
-    console.log("SIGTERM received. Shutting down gracefully");
-    if (server) {
-        server.close(() => {
-            console.log("Server closed due to SIGTERM");
-            process.exit(1);
-        });
-    } else {
-        process.exit(1);
-    }
+  console.log("SIGTERM received. Shutting down gracefully");
+  if (server) {
+    server.close(() => {
+      console.log("Server closed due to SIGTERM");
+      process.exit(1);
+    });
+  } else {
+    process.exit(1);
+  }
 });
 
 process.on("SIGINT", () => {
-    console.log("SIGINT received. Shutting down gracefully");   
-    if (server) {
-        server.close(() => {
-            console.log("Server closed due to SIGINT");
-            process.exit(1);
-        });
-    } else {
-        process.exit(1);
-    }
+  console.log("SIGINT received. Shutting down gracefully");
+  if (server) {
+    server.close(() => {
+      console.log("Server closed due to SIGINT");
+      process.exit(1);
+    });
+  } else {
+    process.exit(1);
+  }
 });
