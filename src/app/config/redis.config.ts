@@ -1,7 +1,7 @@
 import { createClient } from 'redis';
 import { envVars } from './env';
 
-const redisClient = createClient({
+export const redisClient = createClient({
     username: envVars.REDIS.REDIS_USERNAME,
     password: envVars.REDIS.REDIS_PASSWORD,
     socket: {
