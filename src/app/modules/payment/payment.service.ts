@@ -2,6 +2,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
+import { uploadBufferToCloudinary } from "../../config/cloudinary.config";
 import AppError from "../../ErrorHelpers/appError";
 import { generatePdf, IInvoiceData } from "../../utils/invoice";
 import { sendEmail } from "../../utils/sendEmail";
@@ -14,6 +15,8 @@ import { IUser } from "../user/user.interface";
 import { PaymentStatus } from "./payment.interface";
 import { Payment } from "./payment.model";
 import httpStatus from "http-status-codes";
+
+
 
 const initPayment = async (bookingId: string) => {
   const payment = await Payment.findOne({ booking: bookingId });
@@ -84,6 +87,20 @@ const successPayment = async (query: Record<string, string>) => {
 
     const pdfBuffer = await generatePdf(invoiceData);
 
+
+    const cloudinaryResult:any = await uploadBufferToCloudinary(pdfBuffer, "invoice");
+    // console.log(  cloudinaryResult) 
+
+    if(!cloudinaryResult){
+      throw new AppError(httpStatus.NOT_FOUND, "Cloudinary result not found");
+    }
+
+    await Payment.findOneAndUpdate(
+      updatedPayment?._id,
+      { invoiceUrl: cloudinaryResult.secure_url },
+      { runValidators: true, session }
+    );
+
     await sendEmail({
       to: (updatedBooking?.user as unknown as IUser).email,
       subject: "Your Booking Invoice",
@@ -112,6 +129,22 @@ const successPayment = async (query: Record<string, string>) => {
   } finally {
     session.endSession();
   }
+};
+
+const getInvoiceDownloadUrl = async (paymentId: string) => {
+  const payment = await Payment.findById(paymentId)
+  .select("invoiceUrl")
+  // .orFail(new AppError(httpStatus.NOT_FOUND, "Payment not found"));
+
+  if(!payment){
+    throw new AppError(httpStatus.NOT_FOUND, "Payment not found");
+  }
+
+  if(!payment.invoiceUrl){
+    throw new AppError(httpStatus.NOT_FOUND, "Invoice url not found");
+  }
+
+  return payment.invoiceUrl;
 };
 
 const failPayment = async (query: Record<string, string>) => {
@@ -181,6 +214,7 @@ const cancelPayment = async (query: Record<string, string>) => {
 export const PaymentServices = {
   initPayment,
   successPayment,
+  getInvoiceDownloadUrl,
   failPayment,
   cancelPayment,
 };
