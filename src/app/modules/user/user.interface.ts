@@ -37,5 +37,8 @@ export interface IUser {
     auth : IAuthProvider[];
     rides?: Types.ObjectId[];
     drivers?: Types.ObjectId[];
+
+    createdAt?: Date;
+
     
 }

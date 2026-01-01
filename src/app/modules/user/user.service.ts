@@ -42,18 +42,25 @@ const updateUser = async (
   payload: Partial<IUser>,
   decodedToken: JwtPayload
 ) => {
+
+
+  if(decodedToken.role === Role.USER || decodedToken.role === Role.DRIVER){
+    if(decodedToken.id !== userId){
+      throw new AppError(httpStatus.FORBIDDEN, "You are not authorized to update this user");
+    }
+  }
+
+
+
   const ifUserExist = await User.findById(userId);
   if (!ifUserExist) {
     throw new AppError(httpStatus.NOT_FOUND, "User not found");
   }
 
-  // if(ifUserExist.isDeleted){
-  //   throw new AppError(httpStatus.BAD_REQUEST, 'User is deleted. Cannot update deleted user');
-  // }
-
-  // if(ifUserExist.isActive === IsActive.BLOCKED ){
-  //   throw new AppError(httpStatus.BAD_REQUEST, 'User is deactivated. Cannot update deactivated user');
-  // }
+    if(decodedToken.role === Role.ADMIN && ifUserExist.role === Role.SUPER_ADMIN){
+      throw new AppError(httpStatus.FORBIDDEN, "You are not authorized to update this user");
+    }
+    
 
   /*
   * email can not be updated
@@ -71,12 +78,12 @@ const updateUser = async (
         "You are not authorized to update role"
       );
     }
-    if (decodedToken.role === Role.ADMIN && payload.role === Role.SUPER_ADMIN) {
-      throw new AppError(
-        httpStatus.FORBIDDEN,
-        "You are not authorized to update role to SUPER_ADMIN"
-      );
-    }
+    // if (decodedToken.role === Role.ADMIN && payload.role === Role.SUPER_ADMIN) {
+    //   throw new AppError(
+    //     httpStatus.FORBIDDEN,
+    //     "You are not authorized to update role to SUPER_ADMIN"
+    //   );
+    // }
   }
   if (payload.isActive || payload.isDeleted || payload.isVerified) {
     if (decodedToken.role === Role.USER || decodedToken.role === Role.DRIVER) {
@@ -87,12 +94,7 @@ const updateUser = async (
     }
   }
 
-  if (payload.password) {
-    payload.password = await bcryptjs.hash(
-      payload.password as string,
-      Number(envVars.BCRYPT_SALT_ROUNDS)
-    );
-  }
+
 
   const newUpdateUser = await User.findByIdAndUpdate(userId, payload, {
     new: true,
