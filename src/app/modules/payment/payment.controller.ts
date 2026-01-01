@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import { catchAsync } from "../../utils/catchAsync";
 import { sendResponse } from "../../utils/sendResponse";
-import { PaymentServices } from "./payment.services";
+import { PaymentServices } from "./payment.service";
 import { envVars } from "../../config/env";
 
 

@@ -9,8 +9,9 @@ export enum BookingStatus {
 
 export interface IBooking {
   user: Types.ObjectId;
-  ride: Types.ObjectId;
+  ride: Types.ObjectId ;
   payment?: Types.ObjectId;
   status: BookingStatus;
   guestCount: number;
+  createdAt?: Date;
 }

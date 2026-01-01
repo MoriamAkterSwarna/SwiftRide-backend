@@ -21,7 +21,7 @@ interface SendEmailOptions {
   subject: string;
   templateName: string;
   templateData?: Record<string, any>;
-  attachments?: { filename: string; content: string; contentType?: string }[];
+  attachments?: { filename: string; content: Buffer | string; contentType?: string }[];
 }
 
 export const sendEmail = async ({

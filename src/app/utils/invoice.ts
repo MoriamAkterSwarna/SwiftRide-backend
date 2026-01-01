@@ -7,12 +7,12 @@ export interface IInvoiceData {
    bookingDate: Date;
    customerName: string;
    rideTitle: string;
-   maxGuests: number;
+   guestCount: number;
    totalAmount: number;
    
 }
 
-export const generatePdf = async (invoiceData: IInvoiceData) => {
+export const generatePdf = async (invoiceData: IInvoiceData): Promise<Buffer<ArrayBufferLike>> => {
     
 
     try {
@@ -45,7 +45,7 @@ export const generatePdf = async (invoiceData: IInvoiceData) => {
             doc.fontSize(15).text(`Ride Title : ${invoiceData.rideTitle}`);
             doc.moveDown();
 
-            doc.fontSize(15).text(`Max Guests : ${invoiceData.maxGuests}`);
+            doc.fontSize(15).text(`Max Guests : ${invoiceData.guestCount}`);
             doc.moveDown();
 
             doc.fontSize(15).text(`Total Amount : ${invoiceData.totalAmount}`);
