@@ -3,8 +3,10 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
+    "start": "node ./dist/server.js",
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "ts-node-dev --respawn --transpile-only ./src/server.ts",
+    "build": "tsc",
     "lint": "npx eslint ./src"
   },
   "keywords": [],
@@ -29,13 +31,9 @@
     "typescript-eslint": "^8.47.0"
   },
   "dependencies": {
-    "@types/ejs": "^3.1.5",
-    "@types/multer": "^2.0.0",
-    "@types/nodemailer": "^7.0.4",
-    "@types/pdfkit": "^0.17.4",
-    "axios": "^1.13.2",
+    "axios": "^1.7.9",
     "bcryptjs": "^3.0.3",
-    "cloudinary": "^2.8.0",
+    "cloudinary": "^1.41.3",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
     "dotenv": "^17.2.3",
@@ -53,6 +51,6 @@
     "passport-local": "^1.0.0",
     "pdfkit": "^0.17.2",
     "redis": "^5.10.0",
-    "zod": "^4.1.13"
+    "zod": "^3.24.1"
   }
 }

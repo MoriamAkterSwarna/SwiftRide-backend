@@ -2,8 +2,8 @@ import { Response } from "express";
 
 interface TMeta {
     total: number;
-    limit: number;
-    page: number;
+    limit?: number;
+    page?: number;
     totalPages?: number;
 }
 

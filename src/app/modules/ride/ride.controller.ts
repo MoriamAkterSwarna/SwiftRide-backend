@@ -23,7 +23,7 @@ const getAllRideTypes = catchAsync(async (req: Request, res: Response) => {
         success: true,
         message: "Ride types retrieved",
         data: result.data,
-        meta: result.meta,
+        meta: result?.meta,
     });
 });
 
