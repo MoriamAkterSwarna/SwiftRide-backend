@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { Response } from "express";
 import { envVars } from "../config/env";
 
@@ -14,14 +15,15 @@ export const setAuthCookie = (res: Response, tokenInfo: AuthTokens) => {
             httpOnly: true,
             // secure: false, // Set to true if using HTTPS 
 
-            secure: envVars.NODE_ENV === 'production', 
+            secure: true, 
             sameSite: "none",
             
         });
     }
     if(tokenInfo.refreshToken){
         res.cookie('refreshToken', tokenInfo.refreshToken, {
-            secure: envVars.NODE_ENV === 'production', 
+            httpOnly: true,
+            secure: true, 
             sameSite: "none",
         });
     }

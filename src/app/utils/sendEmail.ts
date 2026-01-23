@@ -21,7 +21,7 @@ interface SendEmailOptions {
   subject: string;
   templateName: string;
   templateData?: Record<string, any>;
-  attachments?: { filename: string; content: Buffer | string; contentType?: string }[];
+  attachments?: { filename: string; content: Buffer | string; contentType: string }[];
 }
 
 export const sendEmail = async ({
@@ -33,7 +33,7 @@ export const sendEmail = async ({
 }: SendEmailOptions) => {
   
     try{
-        const templatePath = path.join(__dirname, `template/${templateName}.ejs`);
+        const templatePath = path.join(__dirname, `templates/${templateName}.ejs`);
 
   const html = await ejs.renderFile(templatePath, templateData);
   const info = await transporter.sendMail({
@@ -48,7 +48,7 @@ export const sendEmail = async ({
     })),
   });
 
-  console.log(`\u2709\uFE0F Email sent to ${to}: ${info.messageId}`);
+console.log(`\u2709\uFE0F Email sent to ${to}: ${info.messageId}`);
     }catch(error){
         console.log(error); 
         throw new AppError(500, 'Failed to send email');

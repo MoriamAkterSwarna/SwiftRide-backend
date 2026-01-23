@@ -10,7 +10,7 @@ const generateOTP = (length = 6) => {
     // 6 digit otp
     const otp = crypto.randomInt(10 ** (length -1), 10 ** length).toString();
 
-    return otp; 
+    return otp;  
     
 }
 
@@ -23,7 +23,7 @@ const generateOTP = (length = 6) => {
         throw new AppError(404,"User not found")
     } 
     if(user.isVerified){
-        throw new AppError(400,"User already verified")
+        throw new AppError(401,"User already verified")
     }
     
     const otp = generateOTP(); 
@@ -60,7 +60,7 @@ const generateOTP = (length = 6) => {
         throw new AppError(404,"User not found")
     } 
     if(user.isVerified){
-        throw new AppError(400,"User already verified")
+        throw new AppError(401,"User already verified")
     }
   
 
@@ -68,7 +68,7 @@ const generateOTP = (length = 6) => {
     const storedOTP = await redisClient.get(redisKey); 
 
     if(!storedOTP){
-        throw new AppError(400,"OTP not found")
+        throw new AppError(404,"OTP not found")
     } 
 
     if(storedOTP !== otp){

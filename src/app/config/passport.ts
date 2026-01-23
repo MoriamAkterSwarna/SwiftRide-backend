@@ -11,7 +11,6 @@ import { IsActive, Role } from "../modules/user/user.interface";
 import { Strategy as LocalStrategy } from "passport-local";
 import bcryptjs from "bcryptjs";
 
-
 passport.use(
   new LocalStrategy(
     {
@@ -26,8 +25,7 @@ passport.use(
         }
 
         if (!isUserExist.isVerified) {
-          //   throw new AppError(httpStatus.UNAUTHORIZED, "User is not verified");
-          done(null, false, { message: "User is not verified" });
+          return done(null, false, { message: "User is not verified" });
         }
         if (
           isUserExist.isActive === IsActive.BLOCKED ||
@@ -38,7 +36,9 @@ passport.use(
           //     `User is ${isUserExist.isActive}`
           //   );
 
-         return done(null, false, { message: `User is ${isUserExist.isActive}` });
+          return done(null, false, {
+            message: `User is ${isUserExist.isActive}`,
+          });
         }
 
         if (isUserExist.isDeleted) {
@@ -47,7 +47,7 @@ passport.use(
         }
 
         const isGoogleAuthenticated = isUserExist.auth?.some(
-          (auth) => auth.provider === "google"
+          (auth) => auth.provider === "google",
         );
         if (isGoogleAuthenticated) {
           return done(null, false, {
@@ -57,7 +57,7 @@ passport.use(
 
         const isPasswordMatched = await bcryptjs.compare(
           password as string,
-          isUserExist.password as string
+          isUserExist.password as string,
         );
         if (!isPasswordMatched) {
           return done(null, false, { message: "Invalid credentials" });
@@ -65,11 +65,11 @@ passport.use(
 
         return done(null, isUserExist);
       } catch (error) {
-        console.log(error);
+        // console.log(error);
         done(error);
       }
-    }
-  )
+    },
+  ),
 );
 
 passport.use(
@@ -83,7 +83,7 @@ passport.use(
       accessToken: string,
       refreshToken: string,
       profile: Profile,
-      done: VerifyCallback
+      done: VerifyCallback,
     ) => {
       try {
         const email = profile.emails?.[0].value;
@@ -96,13 +96,16 @@ passport.use(
 
         let isUserExist = await User.findOne({ email: email });
 
-        if(isUserExist && !isUserExist.isVerified){
-          
-            return done(null, false, {
-              message: "User is not verified",
-            });
+        if (isUserExist && !isUserExist.isVerified) {
+          return done(null, false, {
+            message: "User is not verified",
+          });
         }
-        if(isUserExist && (isUserExist.isActive === IsActive.BLOCKED || isUserExist.isActive === IsActive.INACTIVE)){
+        if (
+          isUserExist &&
+          (isUserExist.isActive === IsActive.BLOCKED ||
+            isUserExist.isActive === IsActive.INACTIVE)
+        ) {
           return done(null, false, {
             message: `User is ${isUserExist.isActive}`,
           });
@@ -126,11 +129,11 @@ passport.use(
         return done(null, isUserExist);
       } catch (error) {
         // done(error as Error, undefined);
-        console.log("Google Strategy Error", error);
+        // console.log("Google Strategy Error", error);
         done(error as Error, false);
       }
-    }
-  )
+    },
+  ),
 );
 
 passport.serializeUser((user: any, done: (err: any, id?: unknown) => void) => {
@@ -145,5 +148,5 @@ passport.deserializeUser(
     } catch (error) {
       done(error, null);
     }
-  }
+  },
 );

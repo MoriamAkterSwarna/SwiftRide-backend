@@ -14,7 +14,6 @@ import passport from "passport";
 
 const credentialsLogin = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
-    
     // const loginInfo = await AuthService.credentialsLogin(req.body);
 
     // res.cookie('accessToken', loginInfo.accessToken, {
@@ -28,25 +27,24 @@ const credentialsLogin = catchAsync(
 
     // });
 
-    passport.authenticate("local", async(err:any, user:any, info:any)=>{
-
-      if(err){
+    passport.authenticate("local", async (err: any, user: any, info: any) => {
+      if (err) {
         return next(new AppError(err.statusCode, err.message));
       }
 
-      if(!user){
+      if (!user) {
         return next(new AppError(httpStatus.UNAUTHORIZED, err.message));
       }
 
-      const userTokens =  createUserTokens(user);
+      const userTokens = createUserTokens(user);
 
       // delete user.toObject().password;
-      const {password: pass , ...rest} = user.toObject();
+      const { password: pass, ...rest } = user.toObject();
 
       setAuthCookie(res, userTokens);
 
       sendResponse(res, {
-        statusCode: httpStatus.CREATED,
+        statusCode: httpStatus.OK,
         success: true,
         message: "User Logged in successfully",
         data: {
@@ -55,7 +53,6 @@ const credentialsLogin = catchAsync(
           user: rest,
         },
       });
-
     })(req, res, next);
 
     // setAuthCookie(res, loginInfo);
@@ -66,7 +63,7 @@ const credentialsLogin = catchAsync(
     //   message: "User Logged in successfully",
     //   data: loginInfo,
     // });
-  }
+  },
 );
 const getNewAccessToken = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
@@ -78,7 +75,7 @@ const getNewAccessToken = catchAsync(
     // const refreshToken = req.headers.authorization;
 
     const tokenInfo = await AuthService.getNewAccessToken(
-      refreshToken as string
+      refreshToken as string,
     );
 
     // res.cookie("accessToken", tokenInfo.accessToken, {
@@ -94,7 +91,7 @@ const getNewAccessToken = catchAsync(
       message: "Access token refreshed successfully",
       data: tokenInfo,
     });
-  }
+  },
 );
 
 const logoutUser = catchAsync(
@@ -117,7 +114,7 @@ const logoutUser = catchAsync(
       message: "User logged out successfully",
       data: null,
     });
-  }
+  },
 );
 
 const changePassword = catchAsync(
@@ -127,7 +124,7 @@ const changePassword = catchAsync(
     if (!oldPassword || !newPassword) {
       throw new AppError(
         httpStatus.BAD_REQUEST,
-        "Old password and new password are required"
+        "Old password and new password are required",
       );
     }
 
@@ -140,7 +137,7 @@ const changePassword = catchAsync(
     await AuthService.changePassword(
       oldPassword,
       newPassword,
-      decodedToken as JwtPayload
+      decodedToken as JwtPayload,
     );
 
     sendResponse(res, {
@@ -149,22 +146,17 @@ const changePassword = catchAsync(
       message: "Password reset successfully",
       data: null,
     });
-  }
+  },
 );
 const resetPassword = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
-    
-
     const decodedToken = req.user;
 
     if (!decodedToken) {
       throw new AppError(httpStatus.UNAUTHORIZED, "User not authenticated");
     }
 
-    await AuthService.resetPassword(
-      req.body,
-      decodedToken as JwtPayload
-    );
+    await AuthService.resetPassword(req.body, decodedToken as JwtPayload);
 
     sendResponse(res, {
       statusCode: httpStatus.OK,
@@ -172,12 +164,11 @@ const resetPassword = catchAsync(
       message: "Password reset successfully",
       data: null,
     });
-  }
+  },
 );
 const setPassword = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
     const { password } = req.body;
-
 
     const decodedToken = req.user as JwtPayload;
 
@@ -185,10 +176,7 @@ const setPassword = catchAsync(
       throw new AppError(httpStatus.UNAUTHORIZED, "User not authenticated");
     }
 
-    await AuthService.setPassword(
-      decodedToken.userId,
-      password
-    );
+    await AuthService.setPassword(decodedToken.userId, password);
 
     sendResponse(res, {
       statusCode: httpStatus.CREATED,
@@ -196,27 +184,28 @@ const setPassword = catchAsync(
       message: "Password reset successfully",
       data: null,
     });
-  }
+  },
 );
 
 const googleCallbackController = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
+    let redirectTo = req.query.state ? (req.query.state as string) : "";
 
-    let redirectTo = req.query.redirectTo ? req.query.redirectTo as string : '';
-    
-    if(redirectTo.startsWith("/")){
+    if (redirectTo.startsWith("/")) {
       redirectTo = redirectTo.slice(1);
     }
 
-
     const user = req.user;
 
-    console.log(user)
-    if(!user){
-      throw new AppError(httpStatus.UNAUTHORIZED, "Google authentication failed");
+    // console.log(user)
+    if (!user) {
+      throw new AppError(
+        httpStatus.UNAUTHORIZED,
+        "Google authentication failed",
+      );
     }
-    
-    const tokenInfo =  createUserTokens(user);
+
+    const tokenInfo = createUserTokens(user);
     setAuthCookie(res, tokenInfo);
 
     // sendResponse(res, {
@@ -224,11 +213,10 @@ const googleCallbackController = catchAsync(
     //   success: true,
     //   message: "Google authentication successful",
     //   data: user,
-    // }); 
+    // });
 
     res.redirect(`${envVars.FRONTEND_URL}/${redirectTo}`);
-
-  }
+  },
 );
 
 const forgotPassword = catchAsync(
@@ -247,7 +235,7 @@ const forgotPassword = catchAsync(
       message: "Password reset email sent successfully",
       data: null,
     });
-  }
+  },
 );
 
 export const AuthController = {
@@ -258,5 +246,5 @@ export const AuthController = {
   changePassword,
   setPassword,
   googleCallbackController,
-  forgotPassword
+  forgotPassword,
 };
