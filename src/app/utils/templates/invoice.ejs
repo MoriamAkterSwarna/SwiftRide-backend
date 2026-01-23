@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Invoice</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        background-color: #f5f5f5;
+        margin: 0;
+        padding: 20px;
+      }
+      .container {
+        max-width: 800px;
+        margin: 0 auto;
+        background-color: #ffffff;
+        padding: 40px;
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      }
+      h1 {
+        color: #333333;
+        text-align: center;
+        margin-bottom: 30px;
+        border-bottom: 2px solid #007bff;
+        padding-bottom: 10px;
+      }
+      .invoice-section {
+        margin-bottom: 25px;
+      }
+      .invoice-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 12px 0;
+        border-bottom: 1px solid #eeeeee;
+      }
+      .invoice-row:last-child {
+        border-bottom: none;
+      }
+      .label {
+        font-weight: bold;
+        color: #555555;
+        min-width: 200px;
+      }
+      .value {
+        color: #333333;
+        text-align: right;
+      }
+      .amount {
+        font-size: 20px;
+        font-weight: bold;
+        color: #28a745;
+      }
+      .status {
+        padding: 8px 12px;
+        border-radius: 4px;
+        display: inline-block;
+        font-weight: bold;
+      }
+      .status.success {
+        background-color: #d4edda;
+        color: #155724;
+      }
+      .status.pending {
+        background-color: #fff3cd;
+        color: #856404;
+      }
+      .status.failed {
+        background-color: #f8d7da;
+        color: #721c24;
+      }
+      .download-btn {
+        display: inline-block;
+        margin-top: 20px;
+        padding: 12px 24px;
+        background-color: #007bff;
+        color: white;
+        text-decoration: none;
+        border-radius: 4px;
+        font-weight: bold;
+        transition: background-color 0.3s;
+      }
+      .download-btn:hover {
+        background-color: #0056b3;
+      }
+      .thank-you {
+        text-align: center;
+        margin-top: 30px;
+        padding-top: 20px;
+        border-top: 2px solid #eeeeee;
+        color: #666666;
+        font-style: italic;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>Invoice</h1>
+
+      <div class="invoice-section">
+        <div class="invoice-row">
+          <span class="label">Transaction ID:</span>
+          <span class="value"><%= transactionId %></span>
+        </div>
+        <div class="invoice-row">
+          <span class="label">Booking Date:</span>
+          <span class="value"><%= bookingDate %></span>
+        </div>
+        <div class="invoice-row">
+          <span class="label">Customer Name:</span>
+          <span class="value"><%= customerName %></span>
+        </div>
+        <div class="invoice-row">
+          <span class="label">Ride Title:</span>
+          <span class="value"><%= rideTitle %></span>
+        </div>
+        <div class="invoice-row">
+          <span class="label">Guest Count:</span>
+          <span class="value"><%= guestCount %></span>
+        </div>
+        <div class="invoice-row">
+          <span class="label">Total Amount:</span>
+          <span class="value amount"><%= totalAmount %></span>
+        </div>
+        <div class="invoice-row">
+          <span class="label">Payment Status:</span>
+          <span class="value status success"><%= paymentStatus %></span>
+        </div>
+      </div>
+
+      <div>
+        <a href="<%= invoiceUrl %>" class="download-btn">Download Invoice</a>
+      </div>
+
+      <div class="thank-you">
+        <p>Thank you for using our service!</p>
+      </div>
+    </div>
+  </body>
+</html>
