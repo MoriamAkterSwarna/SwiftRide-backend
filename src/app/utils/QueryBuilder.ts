@@ -33,7 +33,9 @@ constructor(modelQuery: Query<T[], T>, query: Record<string, string>) {
     }
     sort() : this{
         const sortQuery = this.query.sortData || ""; 
-        this.modelQuery.sort(sortQuery)
+        if(sortQuery){
+            this.modelQuery.sort(sortQuery)
+        }
         return this;
     }
     fields() : this{

@@ -1,167 +1,161 @@
 import { model, Schema } from "mongoose";
-import { IRide, IRideType, RideVehicle, PlaceType, totalGuest, RideStatus } from "./ride.interface";
+import {
+  IRide,
+  IRideType,
+  RideVehicle,
+  PlaceType,
+  totalGuest,
+  RideStatus,
+} from "./ride.interface";
 
-export const RideTypeSchema = new Schema<IRideType>({
+export const RideTypeSchema = new Schema<IRideType>(
+  {
     rideVehicle: {
-        type: String,
-        required: true,
-        enum: Object.values(RideVehicle)
+      type: String,
+      required: true,
+      enum: Object.values(RideVehicle),
     },
     placeType: {
-        type: String,
-        required: true,
-        enum: Object.values(PlaceType)
+      type: String,
+      required: true,
+      enum: Object.values(PlaceType),
     },
     totalGuest: {
-        type: Number,
-        enum: Object.values(totalGuest).filter(v => typeof v === 'number')
-    }
-}, {
-    timestamps: true
-})
+      type: Number,
+      enum: Object.values(totalGuest).filter((v) => typeof v === "number"),
+    },
+  },
+  {
+    timestamps: true,
+  },
+);
 
-export const RideType = model<IRideType>("RideType", RideTypeSchema)
+export const RideType = model<IRideType>("RideType", RideTypeSchema);
 
-const rideSchema = new Schema<IRide>({
+const rideSchema = new Schema<IRide>(
+  {
     title: {
-        type: String,
-        required: true,
-        unique: true
+      type: String,
+      required: true,
+      unique: true,
     },
     slug: {
-        type: String,
-        required: true,
-        unique: true
+      type: String,
+      required: true,
+      unique: true,
     },
     description: {
-        type: String,
-
+      type: String,
     },
     images: {
-        type: [String],
-
+      type: [String],
     },
     pickUpLocation: {
-        address: {
-            type: String,
-            required: true
-        },
-        coordinates: {
-            latitude: { type: Number },
-            longitude: { type: Number }
-        }
+      address: {
+        type: String,
+        required: true,
+      },
+      coordinates: {
+        latitude: { type: Number },
+        longitude: { type: Number },
+      },
     },
     dropOffLocation: {
-        address: {
-            type: String,
-            required: true
-        },
-        coordinates: {
-            latitude: { type: Number },
-            longitude: { type: Number }
-        }
+      address: {
+        type: String,
+        required: true,
+      },
+      coordinates: {
+        latitude: { type: Number },
+        longitude: { type: Number },
+      },
     },
     pickUpTime: {
-        type: Date,
-
+      type: Date,
     },
     dropOffTime: {
-        type: Date,
-
+      type: Date,
     },
     cost: {
-        type: Number,
-
+      type: Number,
     },
     amenities: {
-        type: [String],
-        default: []
-
+      type: [String],
+      default: [],
     },
     maxGuests: {
-        type: Number,
-
+      type: Number,
     },
     minAge: {
-        type: Number,
-
+      type: Number,
     },
     division: {
-        type: Schema.Types.ObjectId,
-        ref: "Division",
-        required: true,
-
+      type: Schema.Types.ObjectId,
+      ref: "Division",
+      required: true,
     },
     district: {
-        type: Schema.Types.ObjectId,
-        ref: "District",
-        required: true,
-
+      type: Schema.Types.ObjectId,
+      ref: "District",
+      required: true,
     },
     rideType: {
-        type: Schema.Types.ObjectId,
-        ref: "RideType",
-        required: true,
-
+      type: Schema.Types.ObjectId,
+      ref: "RideType",
+      required: true,
     },
     availableSeats: {
-        type: Number,
-
+      type: Number,
     },
     driver: {
-        type: Schema.Types.ObjectId,
-        ref: "User",
-
+      type: Schema.Types.ObjectId,
+      ref: "User",
     },
     status: {
-        type: String,
-        enum: Object.values(RideStatus),
-        default: RideStatus.ACTIVE
-
+      type: String,
+      enum: Object.values(RideStatus),
+      default: RideStatus.ACTIVE,
     },
     vehicle: {
-        type: String,
-        enum: Object.values(RideVehicle),
+      type: String,
+      enum: Object.values(RideVehicle),
+    },
+  },
+  {
+    timestamps: true,
+  },
+);
 
-    }
-}, {
-    timestamps: true
-})
+rideSchema.pre("save", async function () {
+  if (this.isModified("title")) {
+    const baseSlug = this.title.toLowerCase().split(" ").join("-");
+    let slug = `${baseSlug}-ride`;
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
-rideSchema.pre("save", async function (next: any) {
-    if (this.isModified("title")) {
-        const baseSlug = this.title.toLowerCase().split(" ").join("-")
-        let slug = `${baseSlug}-ride`
-
-        let counter = 0;
-        while (await Ride.exists({ slug })) {
-            slug = `${baseSlug}-ride-${counter++}`
-        }
-
-        this.slug = slug;
-    }
-    next()
-})
-
-rideSchema.pre("findOneAndUpdate", async function (next: any) {
-    const ride = this.getUpdate() as IRide
-
-    if (ride.title) {
-        const baseSlug = ride.title.toLowerCase().split(" ").join("-")
-        let slug = `${baseSlug}-ride`
-
-        let counter = 0;
-        while (await Ride.exists({ slug })) {
-            slug = `${baseSlug}-ride-${counter++}`
-        }
-
-        ride.slug = slug
+    let counter = 0;
+    while (await Ride.exists({ slug })) {
+      slug = `${baseSlug}-ride-${counter++}`;
     }
 
-    this.setUpdate(ride)
+    this.slug = slug;
+  }
+});
 
-    next()
-})
+rideSchema.pre("findOneAndUpdate", async function () {
+  const ride = this.getUpdate() as IRide;
 
-export const Ride = model<IRide>("Ride", rideSchema) 
+  if (ride.title) {
+    const baseSlug = ride.title.toLowerCase().split(" ").join("-");
+    let slug = `${baseSlug}-ride`;
+
+    let counter = 0;
+    while (await Ride.exists({ slug })) {
+      slug = `${baseSlug}-ride-${counter++}`;
+    }
+
+    ride.slug = slug;
+  }
+
+  this.setUpdate(ride);
+});
+
+export const Ride = model<IRide>("Ride", rideSchema);

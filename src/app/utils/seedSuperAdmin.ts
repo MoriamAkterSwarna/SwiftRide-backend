@@ -1,43 +1,56 @@
-import { envVars } from "../config/env"
-import { IAuthProvider, IUser, Role } from "../modules/user/user.interface";
+import { envVars } from "../config/env";
+import {
+  IAuthProvider,
+  IsActive,
+  IUser,
+  Role,
+} from "../modules/user/user.interface";
 import { User } from "../modules/user/user.model";
-import bcryptjs from 'bcryptjs';
+import bcryptjs from "bcryptjs";
 
-export const seedSuperAdmin = async() => {
+export const seedSuperAdmin = async () => {
+  try {
+    const adminEmail = envVars.SUPER_ADMIN_EMAIL.toLowerCase();
+    const hashedPassword = await bcryptjs.hash(
+      envVars.SUPER_ADMIN_PASSWORD,
+      Number(envVars.BCRYPT_SALT_ROUNDS),
+    );
 
-    try {
+    const isSuperAdminExist = await User.findOne({ email: adminEmail });
 
-        const isSuperAdminExist = await User.findOne({ email: envVars.SUPER_ADMIN_EMAIL });
-        
-        if(isSuperAdminExist){
-            console.log('Super Admin already exists');
-            return;
-        }
-
-        const hashedPassword = await bcryptjs.hash(envVars.SUPER_ADMIN_PASSWORD,Number(envVars.BCRYPT_SALT_ROUNDS));
-
-        
-
-        const authProvider:IAuthProvider = {
-            provider: 'credentials',
-            providerId: envVars.SUPER_ADMIN_EMAIL
-        };
-
-        const payload : IUser = {
-            name: 'Super Admin',
-          email: envVars.SUPER_ADMIN_EMAIL,
+    if (isSuperAdminExist) {
+      await User.findOneAndUpdate(
+        { email: adminEmail },
+        {
           password: hashedPassword,
           role: Role.SUPER_ADMIN,
-          auth: [authProvider],
           isVerified: true,
-        };
-
-        const superAdmin = await User.create(payload);
-
-        console.log('Super Admin created successfully:', superAdmin.email);
-
-    } catch (error) {
-        console.log(error)
+          isActive: IsActive.ACTIVE,
+        },
+      );
+      console.log("Super Admin credentials updated from .env");
+      return;
     }
 
-}
+    const authProvider: IAuthProvider = {
+      provider: "credentials",
+      providerId: adminEmail,
+    };
+
+    const payload: IUser = {
+      name: "Super Admin",
+      email: adminEmail,
+      password: hashedPassword,
+      role: Role.SUPER_ADMIN,
+      auth: [authProvider],
+      isVerified: true,
+      isActive: IsActive.ACTIVE,
+    };
+
+    const superAdmin = await User.create(payload);
+
+    console.log("Super Admin created successfully:", superAdmin.email);
+  } catch (error) {
+    console.log(error);
+  }
+};

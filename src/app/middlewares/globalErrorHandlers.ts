@@ -3,7 +3,7 @@
 import { NextFunction, Request, Response } from "express";
 import { envVars } from "../config/env";
 import AppError from "../ErrorHelpers/appError";
-import { Profile } from 'passport-google-oauth20';
+import { Profile } from "passport-google-oauth20";
 import mongoose, { Mongoose } from "mongoose";
 import { handleDuplicateError } from "../helpers/handleDuplicateError";
 import { handleCastError } from "../helpers/handleCastError";
@@ -11,24 +11,29 @@ import { handleValidationError } from "../helpers/handleValidationError";
 import { handleZodError } from "../helpers/handleZodError";
 import { deleteImageFromCloudinary } from "../config/cloudinary.config";
 
-
-
-export const globalErrorHandlers = async(err: any, req: Request, res: Response, next: NextFunction) => {
-
+export const globalErrorHandlers = (
+  err: any,
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
   if (envVars.NODE_ENV === "development") {
     console.log(err);
   }
 
   if (req.file) {
-        await deleteImageFromCloudinary(req.file.path)
-    }
+    deleteImageFromCloudinary(req.file.path).catch(console.error);
+  }
 
-    if (req.files && Array.isArray(req.files) && req.files.length) {
-        const imageUrls = (req.files as Express.Multer.File[]).map(file => file.path)
+  if (req.files && Array.isArray(req.files) && req.files.length) {
+    const imageUrls = (req.files as Express.Multer.File[]).map(
+      (file) => file.path,
+    );
 
-        await Promise.all(imageUrls.map(url => deleteImageFromCloudinary(url)))
-    }
-
+    Promise.all(imageUrls.map((url) => deleteImageFromCloudinary(url))).catch(
+      console.error,
+    );
+  }
 
   let statusCode = 500;
   let message = `Something went wrong! ${err.message}`;
@@ -44,20 +49,17 @@ export const globalErrorHandlers = async(err: any, req: Request, res: Response, 
     // console.log("Duplicate Error")
     //   statusCode = 400;
     //  const duplicate = err.message.match(/"([^"]*)"/);
-    //   message = `Duplicate value entered for ${duplicate ? duplicate[1] : 'field'}. Please choose another value!`; 
+    //   message = `Duplicate value entered for ${duplicate ? duplicate[1] : 'field'}. Please choose another value!`;
     const simplifiedError = handleDuplicateError(err);
     statusCode = simplifiedError.statusCode;
     message = simplifiedError.message;
-
   } else if (err.name === "CastError") {
-
     // statusCode = 400;
-    //  message = `Invalid MongoDB ObjectID. Profile not found with id: ${err.value}`; 
+    //  message = `Invalid MongoDB ObjectID. Profile not found with id: ${err.value}`;
 
     const simplifiedError = handleCastError(err);
     statusCode = simplifiedError.statusCode;
     message = simplifiedError.message;
-
   } else if (err.name === "ValidationError") {
     //   statusCode = 400;
     // const errors = Object.values(err.errors);
@@ -70,32 +72,29 @@ export const globalErrorHandlers = async(err: any, req: Request, res: Response, 
     //     message: el.message,
     //   });
     // });
-    // // console.log(errorSources); 
+    // // console.log(errorSources);
     // message = err.message;
 
     const simplifiedError = handleValidationError(err);
     statusCode = simplifiedError.statusCode;
     message = simplifiedError.message;
     errorSources = simplifiedError.errorSources;
-  }
-  else if (err.name === "ZodError") {
-
+  } else if (err.name === "ZodError") {
     // statusCode = 400;
     // const errors = err.issues;
     // err.forEach((el: any) => {
     //   errorSources.push({
     //     path: el.path[el.path.length - 1]  ,
-    //     //path : nickname inside lastname inside name 
+    //     //path : nickname inside lastname inside name
 
     //     message: el.message,
     //   });
-    // }); 
+    // });
 
     const simplifiedError = handleZodError(err);
     statusCode = simplifiedError.statusCode;
     message = simplifiedError.message;
     errorSources = simplifiedError.errorSources;
-
   } else if (err instanceof AppError) {
     statusCode = err.statusCode;
     message = err.message;
@@ -110,5 +109,5 @@ export const globalErrorHandlers = async(err: any, req: Request, res: Response, 
     errorSources,
     err: envVars.NODE_ENV === "development" ? err : null,
     stack: envVars.NODE_ENV === "development" ? err.stack : null,
-  })
+  });
 };

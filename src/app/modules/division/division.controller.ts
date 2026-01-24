@@ -7,10 +7,10 @@ import { IDivision } from "./division.interface";
 
 const createDivision = catchAsync(async (req: Request, res: Response) => {
 
-  // console.log({
-  //   file : req.file,
-  //   body : req.body
-  // })
+  console.log({
+    file : req.file,
+    body : req.body
+  })
 
   const payload : IDivision = {
     ...req.body,

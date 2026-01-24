@@ -14,7 +14,7 @@ const router = Router()
 router.post(
     "/create",
     checkAuth(Role.ADMIN, Role.SUPER_ADMIN),
-    multerUpload.single(""),
+    multerUpload.single("thumbnail"),
     validateRequest(createDistrictSchema),
     DistrictController.createDistrict
 );
@@ -24,7 +24,7 @@ router.get("/:slug", DistrictController.getSingleDistrict)
 router.patch(
     "/:id",
     checkAuth(Role.ADMIN, Role.SUPER_ADMIN),
-    multerUpload.single("file"),
+    multerUpload.single("thumbnail"),
     validateRequest(updateDistrictSchema),
     DistrictController.updateDistrict
 );

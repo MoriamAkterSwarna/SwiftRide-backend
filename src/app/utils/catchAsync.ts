@@ -5,7 +5,7 @@ import { envVars } from "../config/env";
 type AsyncHandler = (
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) => Promise<void>;
 
 export const catchAsync =
@@ -14,6 +14,8 @@ export const catchAsync =
       if (envVars.NODE_ENV === "development") {
         console.log(err);
       }
-      next(err)
+      if (typeof next === "function") {
+        next(err);
+      }
     });
   };

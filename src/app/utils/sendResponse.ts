@@ -1,4 +1,5 @@
 import { Response } from "express";
+import  httpStatus  from 'http-status-codes';
 
 interface TMeta {
     total: number;
@@ -17,7 +18,7 @@ interface TResponse<T>{
 
 export const sendResponse = <T>(res: Response, data: TResponse<T>) => {
    
-    res.status(data.statusCode).json({
+    res.status(data?.statusCode || httpStatus.OK).json({
         success: data.success,
         message: data.message,
         meta: data.meta,

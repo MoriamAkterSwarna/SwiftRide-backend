@@ -27,13 +27,23 @@ const credentialsLogin = catchAsync(
 
     // });
 
-    passport.authenticate("local", async (err: any, user: any, info: any) => {
+    passport.authenticate("local", (err: any, user: any, info: any) => {
       if (err) {
-        return next(new AppError(err.statusCode, err.message));
+        return next(
+          new AppError(
+            err.statusCode || httpStatus.INTERNAL_SERVER_ERROR,
+            err.message,
+          ),
+        );
       }
 
       if (!user) {
-        return next(new AppError(httpStatus.UNAUTHORIZED, err.message));
+        return next(
+          new AppError(
+            httpStatus.UNAUTHORIZED,
+            info?.message || "Unauthorized",
+          ),
+        );
       }
 
       const userTokens = createUserTokens(user);

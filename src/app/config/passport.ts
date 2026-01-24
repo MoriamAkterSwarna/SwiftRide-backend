@@ -19,8 +19,9 @@ passport.use(
     },
     async (email: string, password: string, done) => {
       try {
-        const isUserExist = await User.findOne({ email: email });
+        const isUserExist = await User.findOne({ email: email.toLowerCase() });
         if (!isUserExist) {
+          console.log(`Login failed: User with email ${email} not found.`);
           return done(null, false, { message: "User not found" });
         }
 
