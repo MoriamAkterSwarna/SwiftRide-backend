@@ -3,17 +3,23 @@ import { Types } from "mongoose";
 export enum RideVehicle {
   BIKE = "Bike",
   CAR = "Car",
+  VAN = "Van" ,
+  BUS = "Bus"
 }
 
 export enum PlaceType {
   PRIVATE_PLACE = "Private Place",
   PUBLIC_PLACE = "Public Place",
+  INSIDE_CITY = "Inside City",
+  OUTSIDE_CITY = "Outside City",
+  AIRPORT = "Airport",
 }
 
-export enum totalGuest {
-  BIKE = 2,
-  CAR = 5,
-}
+// export enum totalGuest {
+//   BIKE = 2,
+//   CAR = 6,
+
+// }
 
 export enum RideStatus {
   ACTIVE = "Active",
@@ -24,7 +30,7 @@ export enum RideStatus {
 export interface IRideType {
   rideVehicle: RideVehicle;
   placeType: PlaceType;
-  totalGuest?: totalGuest;
+  totalGuest?: number ;
 }
 
 export interface IRide {

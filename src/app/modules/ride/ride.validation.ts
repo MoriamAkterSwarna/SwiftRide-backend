@@ -1,18 +1,18 @@
 import { z } from "zod";
 
 // RideType Validation Schemas
+// In ride.validation.ts
 export const createRideTypeSchema = z.object({
-    rideVehicle: z.enum(["Bike", "Car"]),
-    placeType: z.enum(["Private Place", "Public Place"]),
+    rideVehicle: z.enum(["Bike", "Car", "Bus", "Van"]),
+    placeType: z.enum(["Private Place", "Public Place", "Inside City", "Outside City", "Airport"]),
     totalGuest: z.number().optional(),
 });
 
 export const updateRideTypeSchema = z.object({
-    rideVehicle: z.enum(["Bike", "Car"]).optional(),
-    placeType: z.enum(["Private Place", "Public Place"]).optional(),
+    rideVehicle: z.enum(["Bike", "Car", "Bus", "Van"]).optional(),
+    placeType: z.enum(["Private Place", "Public Place", "Inside City", "Outside City", "Airport"]).optional(),
     totalGuest: z.number().optional(),
 });
-
 // Ride Validation Schemas
 const locationSchema = z.object({
     address: z.string().min(1),

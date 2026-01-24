@@ -4,7 +4,6 @@ import {
   IRideType,
   RideVehicle,
   PlaceType,
-  totalGuest,
   RideStatus,
 } from "./ride.interface";
 
@@ -22,7 +21,7 @@ export const RideTypeSchema = new Schema<IRideType>(
     },
     totalGuest: {
       type: Number,
-      enum: Object.values(totalGuest).filter((v) => typeof v === "number"),
+      
     },
   },
   {
