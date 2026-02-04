@@ -1,5 +1,5 @@
 import AppError from "../../ErrorHelpers/appError";
-import { IAuthProvider, IUser, Role } from "./user.interface";
+import { IAuthProvider, IsActive, IUser, Role } from "./user.interface";
 import { User } from "./user.model";
 import httpStatus from "http-status-codes";
 import bcryptjs from "bcryptjs";
@@ -139,10 +139,79 @@ const getMe = async (userId: string) => {
   };
 };
 
+// Block/Unblock user (Admin only)
+const blockUser = async (userId: string, adminId: string) => {
+  const user = await User.findById(userId);
+  if (!user) {
+    throw new AppError(httpStatus.NOT_FOUND, "User not found");
+  }
+
+  // Prevent blocking admins
+  if (user.role === Role.SUPER_ADMIN) {
+    throw new AppError(httpStatus.FORBIDDEN, "Cannot block a Super Admin");
+  }
+
+  const admin = await User.findById(adminId);
+  if (admin?.role === Role.ADMIN && user.role === Role.ADMIN) {
+    throw new AppError(httpStatus.FORBIDDEN, "Admin cannot block another Admin");
+  }
+
+  const updatedUser = await User.findByIdAndUpdate(
+    userId,
+    { isActive: IsActive.BLOCKED },
+    { new: true }
+  ).select("-password");
+
+  return updatedUser;
+};
+
+const unblockUser = async (userId: string) => {
+  const user = await User.findById(userId);
+  if (!user) {
+    throw new AppError(httpStatus.NOT_FOUND, "User not found");
+  }
+
+  const updatedUser = await User.findByIdAndUpdate(
+    userId,
+    { isActive: IsActive.ACTIVE },
+    { new: true }
+  ).select("-password");
+
+  return updatedUser;
+};
+
+// Delete user (soft delete)
+const deleteUser = async (userId: string, adminId: string) => {
+  const user = await User.findById(userId);
+  if (!user) {
+    throw new AppError(httpStatus.NOT_FOUND, "User not found");
+  }
+
+  if (user.role === Role.SUPER_ADMIN) {
+    throw new AppError(httpStatus.FORBIDDEN, "Cannot delete a Super Admin");
+  }
+
+  const admin = await User.findById(adminId);
+  if (admin?.role === Role.ADMIN && user.role === Role.ADMIN) {
+    throw new AppError(httpStatus.FORBIDDEN, "Admin cannot delete another Admin");
+  }
+
+  const updatedUser = await User.findByIdAndUpdate(
+    userId,
+    { isDeleted: true, isActive: IsActive.INACTIVE },
+    { new: true }
+  ).select("-password");
+
+  return updatedUser;
+};
+
 export const UserServices = {
   createUser,
   getAllUsers,
   updateUser,
   getSingleUser,
   getMe,
+  blockUser,
+  unblockUser,
+  deleteUser,
 };

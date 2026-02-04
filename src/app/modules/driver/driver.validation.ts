@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-const createRiderValidationSchema = z.object({
+const createDriverValidationSchema = z.object({
   body: z.object({
     user: z.string({
       required_error: "User ID is required",
@@ -20,21 +20,20 @@ const createRiderValidationSchema = z.object({
   }),
 });
 
-const updateRiderValidationSchema = z.object({
+const updateDriverValidationSchema = z.object({
   body: z.object({
     vehicleType: z.enum(["Car", "Bike"]).optional(),
     vehicleModel: z.string().optional(),
     vehiclePlateNumber: z.string().optional(),
     drivingLicense: z.string().optional(),
-    status: z
-      .enum(["pending", "verified", "rejected", "on-ride", "idle"])
-      .optional(),
+    status: z.enum(["pending", "approved", "rejected", "suspended"]).optional(),
     isActive: z.boolean().optional(),
     isVerified: z.boolean().optional(),
+    isOnline: z.boolean().optional(),
   }),
 });
 
-export const RiderValidations = {
-  createRiderValidationSchema,
-  updateRiderValidationSchema,
+export const DriverValidations = {
+  createDriverValidationSchema,
+  updateDriverValidationSchema,
 };

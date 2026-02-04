@@ -1,4 +1,4 @@
-export const riderSearchableFields = [
+export const driverSearchableFields = [
   "vehicleModel",
   "vehiclePlateNumber",
   "drivingLicense",

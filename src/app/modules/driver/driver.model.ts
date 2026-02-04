@@ -1,7 +1,7 @@
 import { Schema, model } from "mongoose";
-import { IRider } from "./rider.interface";
+import { IDriver } from "./driver.interface";
 
-const riderSchema = new Schema<IRider>(
+const driverSchema = new Schema<IDriver>(
   {
     user: {
       type: Schema.Types.ObjectId,
@@ -36,18 +36,34 @@ const riderSchema = new Schema<IRider>(
       type: Number,
       default: 5.0,
     },
+    totalRatings: {
+      type: Number,
+      default: 0,
+    },
     isVerified: {
       type: Boolean,
       default: false,
     },
     status: {
       type: String,
-      enum: ["pending", "verified", "rejected", "on-ride", "idle"],
+      enum: ["pending", "approved", "rejected", "suspended"],
       default: "pending",
     },
     isActive: {
       type: Boolean,
       default: true,
+    },
+    isOnline: {
+      type: Boolean,
+      default: false,
+    },
+    earnings: {
+      type: Number,
+      default: 0,
+    },
+    currentLocation: {
+      latitude: { type: Number },
+      longitude: { type: Number },
     },
   },
   {
@@ -55,4 +71,8 @@ const riderSchema = new Schema<IRider>(
   },
 );
 
-export const Rider = model<IRider>("Rider", riderSchema);
+// Index for location-based queries
+driverSchema.index({ "currentLocation.latitude": 1, "currentLocation.longitude": 1 });
+driverSchema.index({ isOnline: 1, status: 1, vehicleType: 1 });
+
+export const Driver = model<IDriver>("Driver", driverSchema);

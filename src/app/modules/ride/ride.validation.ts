@@ -40,7 +40,7 @@ export const createRideSchema = z.object({
     availableSeats: z.number().optional(),
     driver: z.string().optional(),
     status: z.enum(["Active", "Completed", "Cancelled"]).optional(),
-    vehicle: z.enum(["Bike", "Car"]).optional(),
+    vehicle: z.enum(["Bike", "Car", "Bus", "Van"]).optional(),
 });
 
 export const updateRideSchema = z.object({
@@ -61,6 +61,6 @@ export const updateRideSchema = z.object({
     availableSeats: z.number().optional(),
     driver: z.string().optional(),
     status: z.enum(["Active", "Completed", "Cancelled"]).optional(),
-    vehicle: z.enum(["Bike", "Car"]).optional(),
+    vehicle: z.enum(["Bike", "Car", "Bus", "Van"]).optional(),
     deleteImages: z.array(z.string()).optional(),
 });

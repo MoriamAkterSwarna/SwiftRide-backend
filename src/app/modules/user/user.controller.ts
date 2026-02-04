@@ -96,6 +96,50 @@ const getMe = catchAsync(
   }
 );
 
+const blockUser = catchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const userId = req.params.id;
+    const decodedToken = req.user as JwtPayload;
+    const user = await UserServices.blockUser(userId, decodedToken.userId);
+
+    sendResponse(res, {
+      statusCode: httpStatus.OK,
+      success: true,
+      message: "User blocked successfully",
+      data: user,
+    });
+  }
+);
+
+const unblockUser = catchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const userId = req.params.id;
+    const user = await UserServices.unblockUser(userId);
+
+    sendResponse(res, {
+      statusCode: httpStatus.OK,
+      success: true,
+      message: "User unblocked successfully",
+      data: user,
+    });
+  }
+);
+
+const deleteUser = catchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const userId = req.params.id;
+    const decodedToken = req.user as JwtPayload;
+    const user = await UserServices.deleteUser(userId, decodedToken.userId);
+
+    sendResponse(res, {
+      statusCode: httpStatus.OK,
+      success: true,
+      message: "User deleted successfully",
+      data: user,
+    });
+  }
+);
+
 
 export const UserController = {
   createUser,
@@ -103,4 +147,7 @@ export const UserController = {
   updateUser,
   getSingleUser,
   getMe,
+  blockUser,
+  unblockUser,
+  deleteUser,
 };

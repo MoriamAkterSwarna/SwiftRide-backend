@@ -8,7 +8,11 @@ import { BookingRoutes } from "../modules/booking/booking.route";
 import { PaymentRoutes } from "../modules/payment/payment.route";
 import { OtpRoutes } from "../modules/otp/otp.route";
 import { StatsRoutes } from "../modules/stats/stats.route";
-import { RiderRoutes } from "../modules/rider/rider.route";
+import { DriverRoutes } from "../modules/driver/driver.route";
+import { RideRequestRoutes } from "../modules/rideRequest/rideRequest.route";
+import { ReviewRoutes } from "../modules/review/review.route";
+import { FareEstimationRoutes } from "../modules/fareEstimation/fareEstimation.route";
+import { DriverLocationRoutes } from "../modules/driverLocation/driverLocation.route";
 
 export const router = Router();
 const moduleRoutes = [
@@ -49,8 +53,24 @@ const moduleRoutes = [
     route: StatsRoutes,
   },
   {
-    path: "/rider",
-    route: RiderRoutes,
+    path: "/driver",
+    route: DriverRoutes,
+  },
+  {
+    path: "/ride-request",
+    route: RideRequestRoutes,
+  },
+  {
+    path: "/review",
+    route: ReviewRoutes,
+  },
+  {
+    path: "/fare",
+    route: FareEstimationRoutes,
+  },
+  {
+    path: "/driver-location",
+    route: DriverLocationRoutes,
   },
 ];
 
