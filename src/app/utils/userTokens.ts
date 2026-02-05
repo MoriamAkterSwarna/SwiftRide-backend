@@ -1,6 +1,6 @@
 import { JwtPayload } from "jsonwebtoken";
 import { envVars } from "../config/env";
-import { IsActive, IUser } from "../modules/user/user.interface";
+import { IsActive, IUser, Role } from "../modules/user/user.interface";
 import { generateToken, verifyToken } from "./jwt";
 import { User } from "../modules/user/user.model";
 import AppError from "../ErrorHelpers/appError";
@@ -50,9 +50,11 @@ export const createNewAccessTokenWithRefreshToken = async(refreshToken: string) 
       throw new AppError(httpStatus.UNAUTHORIZED, "User does not exist");
     }
 
+    // Super admins cannot be blocked
     if (
-      isUserExist.isActive === IsActive.BLOCKED ||
-      isUserExist.isActive === IsActive.INACTIVE
+      isUserExist.role !== Role.SUPER_ADMIN &&
+      (isUserExist.isActive === IsActive.BLOCKED ||
+        isUserExist.isActive === IsActive.INACTIVE)
     ) {
       throw new AppError(
         httpStatus.UNAUTHORIZED,

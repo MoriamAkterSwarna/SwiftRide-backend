@@ -9,6 +9,7 @@ import { verifyToken } from "../../utils/jwt";
 import { envVars } from "../../config/env";
 // import AppError from "../../ErrorHelpers/appError";
 import { JwtPayload } from "jsonwebtoken";
+import { User } from "./user.model";
 
 const createUser = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
@@ -80,6 +81,18 @@ const getSingleUser = catchAsync(
     });
   }
 );
+const getPendingDriverRequests = catchAsync(
+  async (req, res, next) => {
+    const requests = await UserServices.getPendingDriverRequests();
+    sendResponse(res, {
+      statusCode: 200,
+      success: true,
+      message: "Pending driver requests fetched successfully",
+      data: requests,
+    });
+  }
+);
+
 
 const getMe = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
@@ -114,13 +127,14 @@ const blockUser = catchAsync(
 const unblockUser = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
     const userId = req.params.id;
+    const decodedToken = req.user as JwtPayload;
     const user = await UserServices.unblockUser(userId);
 
     sendResponse(res, {
       statusCode: httpStatus.OK,
       success: true,
       message: "User unblocked successfully",
-      data: user,
+      data: decodedToken,
     });
   }
 );
@@ -144,6 +158,7 @@ const deleteUser = catchAsync(
 export const UserController = {
   createUser,
   getAllUsers,
+  getPendingDriverRequests,
   updateUser,
   getSingleUser,
   getMe,

@@ -207,7 +207,6 @@ const googleCallbackController = catchAsync(
 
     const user = req.user;
 
-    // console.log(user)
     if (!user) {
       throw new AppError(
         httpStatus.UNAUTHORIZED,
@@ -218,14 +217,11 @@ const googleCallbackController = catchAsync(
     const tokenInfo = createUserTokens(user);
     setAuthCookie(res, tokenInfo);
 
-    // sendResponse(res, {
-    //   statusCode: httpStatus.OK,
-    //   success: true,
-    //   message: "Google authentication successful",
-    //   data: user,
-    // });
-
-    res.redirect(`${envVars.FRONTEND_URL}/${redirectTo}`);
+    // Redirect with tokens in query params so frontend can capture them
+    const userJson = encodeURIComponent(JSON.stringify(user));
+    const callbackUrl = `${envVars.FRONTEND_URL}/auth/google/callback?accessToken=${tokenInfo.accessToken}&refreshToken=${tokenInfo.refreshToken}&user=${userJson}`;
+    
+    res.redirect(callbackUrl);
   },
 );
 

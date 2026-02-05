@@ -1,12 +1,17 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { QueryBuilder } from "../../utils/QueryBuilder";
 import { RideRequest } from "../rideRequest/rideRequest.model";
 import { RideRequestStatus } from "../rideRequest/rideRequest.interface";
 import { driverSearchableFields } from "./driver.constant";
 import { IDriver } from "./driver.interface";
 import { Driver } from "./driver.model";
+import { Role } from "../user/user.interface";
+import { User } from "../user/user.model";
 
 const createDriverIntoDB = async (payload: IDriver) => {
+  console.log(payload)
   const result = await Driver.create(payload);
+  console.log(result)
   return result;
 };
 
@@ -25,6 +30,8 @@ const getAllDriversFromDB = async (query: Record<string, unknown>) => {
     driverQuery.build(),
     driverQuery.getMeta(),
   ]);
+
+  console.log(data)
 
   return {
     meta,
@@ -72,7 +79,23 @@ const changeDriverStatus = async (
   id: string,
   status: "approved" | "rejected",
 ) => {
-  const result = await Driver.findByIdAndUpdate(id, { status }, { new: true });
+  const driver = await Driver.findById(id);
+  if (!driver) {
+    throw new Error("Driver not found");
+  }
+
+  // Update driver status
+  const result = await Driver.findByIdAndUpdate(
+    id, 
+    { status, isVerified: status === "approved" }, 
+    { new: true }
+  ).populate("user", "name email phone");
+
+  // If approved, update user role to DRIVER
+  if (status === "approved") {
+    await User.findByIdAndUpdate(driver.user, { role: Role.DRIVER });
+  }
+
   return result;
 };
 
@@ -118,7 +141,7 @@ const getDriverEarningsHistory = async (
 
   // Get completed rides with earnings
   const completedRides = await RideRequest.find({
-    driver: userId,
+    driver: driver._id,
     status: RideRequestStatus.COMPLETED,
   })
     .select("fare pickupLocation dropoffLocation completedAt createdAt")

@@ -1,6 +1,7 @@
 import AppError from "../../ErrorHelpers/appError";
 import { IAuthProvider, IsActive, IUser, Role } from "./user.interface";
 import { User } from "./user.model";
+import { Driver } from "../driver/driver.model";
 import httpStatus from "http-status-codes";
 import bcryptjs from "bcryptjs";
 import { envVars } from "../../config/env";
@@ -132,6 +133,14 @@ const getSingleUser = async (id: string) => {
   };
 };
 
+
+const getPendingDriverRequests = async () => {
+  const requests = await Driver.find({ status: 'pending' })
+    .populate('user', '-password')
+    .sort({ createdAt: -1 });
+  return requests;
+}
+
 const getMe = async (userId: string) => {
   const user = await User.findById(userId).select("-password");
   return {
@@ -158,7 +167,7 @@ const blockUser = async (userId: string, adminId: string) => {
 
   const updatedUser = await User.findByIdAndUpdate(
     userId,
-    { isActive: IsActive.BLOCKED },
+    { isActive: IsActive.BLOCKED , status: 'Blocked' },
     { new: true }
   ).select("-password");
 
@@ -173,7 +182,7 @@ const unblockUser = async (userId: string) => {
 
   const updatedUser = await User.findByIdAndUpdate(
     userId,
-    { isActive: IsActive.ACTIVE },
+    { isActive: IsActive.ACTIVE , status: 'Active' },
     { new: true }
   ).select("-password");
 
@@ -214,4 +223,5 @@ export const UserServices = {
   blockUser,
   unblockUser,
   deleteUser,
+  getPendingDriverRequests,
 };

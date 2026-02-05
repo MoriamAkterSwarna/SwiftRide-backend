@@ -28,9 +28,12 @@ passport.use(
         if (!isUserExist.isVerified) {
           return done(null, false, { message: "User is not verified" });
         }
+        
+        // Super admins cannot be blocked
         if (
-          isUserExist.isActive === IsActive.BLOCKED ||
-          isUserExist.isActive === IsActive.INACTIVE
+          isUserExist.role !== Role.SUPER_ADMIN &&
+          (isUserExist.isActive === IsActive.BLOCKED ||
+            isUserExist.isActive === IsActive.INACTIVE)
         ) {
           //   throw new AppError(
           //     httpStatus.UNAUTHORIZED,
@@ -102,8 +105,11 @@ passport.use(
             message: "User is not verified",
           });
         }
+        
+        // Super admins cannot be blocked
         if (
           isUserExist &&
+          isUserExist.role !== Role.SUPER_ADMIN &&
           (isUserExist.isActive === IsActive.BLOCKED ||
             isUserExist.isActive === IsActive.INACTIVE)
         ) {

@@ -22,7 +22,9 @@ const createDriver = catchAsync(async (req, res) => {
 });
 
 const getAllDrivers = catchAsync(async (req, res) => {
+ 
   const result = await DriverServices.getAllDriversFromDB(req.query);
+
   sendResponse(res, {
     statusCode: StatusCodes.OK,
     success: true,

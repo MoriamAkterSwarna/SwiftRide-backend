@@ -31,6 +31,7 @@ export interface IUser {
     address?: string;
     isDeleted?: string;
     isActive?: IsActive;
+    status?: string;
     isVerified?: boolean;
 
     role: Role;

@@ -4,7 +4,7 @@ import { JwtPayload } from "jsonwebtoken";
 import { envVars } from "../../config/env";
 import { generateToken, verifyToken } from "../../utils/jwt";
 import { createNewAccessTokenWithRefreshToken, createUserTokens } from "../../utils/userTokens";
-import { IAuthProvider, IsActive, IUser } from "../user/user.interface"
+import { IAuthProvider, IsActive, IUser, Role } from "../user/user.interface"
 import { User } from "../user/user.model";
 import  bcryptjs  from 'bcryptjs';
 import AppError from "../../ErrorHelpers/appError";
@@ -207,15 +207,18 @@ const forgotPassword = async (email: string) => {
   if (!isUserExist) {
     throw new AppError(httpStatus.NOT_FOUND, "User not found");
   }
+  
+  // Super admins cannot be blocked
   if (
-            isUserExist.isActive === IsActive.BLOCKED ||
-            isUserExist.isActive === IsActive.INACTIVE
-          ) {
-            throw new AppError(
-              httpStatus.UNAUTHORIZED,
-              `User is ${isUserExist.isActive}`
-            );
-          }
+    isUserExist.role !== Role.SUPER_ADMIN &&
+    (isUserExist.isActive === IsActive.BLOCKED ||
+      isUserExist.isActive === IsActive.INACTIVE)
+  ) {
+    throw new AppError(
+      httpStatus.UNAUTHORIZED,
+      `User is ${isUserExist.isActive}`
+    );
+  }
       
           if (isUserExist.isDeleted) {
             throw new AppError(httpStatus.UNAUTHORIZED, "User is deleted");

@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import nodemailer from "nodemailer";
 import { envVars } from "../config/env";

@@ -10,7 +10,14 @@ export const validateRequest =
         req.body = JSON.parse(req.body.data);
       }
 
-      req.body = await zodSchema.parseAsync(req.body);
+      // Validate with body wrapper to support schemas that expect { body: { ... } }
+      const validated = await zodSchema.parseAsync({ body: req.body });
+      
+      // Extract body back to req.body if it exists
+      if (validated.body) {
+        req.body = validated.body;
+      }
+      
       next();
     } catch (error) {
       next(error);

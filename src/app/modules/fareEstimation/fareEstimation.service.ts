@@ -1,5 +1,4 @@
-import httpStatus from "http-status-codes";
-import AppError from "../../ErrorHelpers/appError";
+
 import {
   AVERAGE_SPEEDS,
   CURRENCY,

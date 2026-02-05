@@ -36,7 +36,7 @@ router.post(
 
 // Admin routes
 router.get(
-  "/",
+  "/all-drivers",
   checkAuth(Role.ADMIN, Role.SUPER_ADMIN),
   DriverControllers.getAllDrivers,
 );
@@ -59,6 +59,8 @@ router.delete(
   checkAuth(Role.ADMIN, Role.SUPER_ADMIN),
   DriverControllers.deleteDriver,
 );
+
+
 
 // Admin: Approve/Reject/Suspend drivers
 router.patch(
