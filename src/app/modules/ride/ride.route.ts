@@ -42,7 +42,13 @@ router.post(
     validateRequest(createRideSchema),
     RideController.createRide
 );
-router.get("/", RideController.getAllRides);
+router.get("/",checkAuth(Role.ADMIN, Role.SUPER_ADMIN, Role.DRIVER), RideController.getAllRides);
+router.get(
+    "/my-rides",
+    checkAuth(Role.USER, Role.RIDER),
+    RideController.getMyRides
+);
+router.get("/user/:userId", RideController.getRideByUserId);
 router.get("/division/:divisionId", RideController.getRidesByDivision);
 router.get("/district/:districtId", RideController.getRidesByDistrict);
 router.get("/status/:status", RideController.getRidesByStatus);

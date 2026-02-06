@@ -26,6 +26,7 @@ const userSchema = new Schema<IUser>({
     status: { type: String, enum: ['Active', 'Blocked'], default: 'Active' },
     isVerified: { type: Boolean, default: false },
     auth : [authProviderSchema],
+    agreeToTerms: { type: Boolean, default: false },
     
 
 },{

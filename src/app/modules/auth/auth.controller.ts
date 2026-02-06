@@ -61,6 +61,7 @@ const credentialsLogin = catchAsync(
           accessToken: userTokens.accessToken,
           refreshToken: userTokens.refreshToken,
           user: rest,
+          redirectUrl: "/home",
         },
       });
     })(req, res, next);

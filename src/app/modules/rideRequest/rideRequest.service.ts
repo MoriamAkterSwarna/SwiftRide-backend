@@ -25,26 +25,6 @@ const estimateFare = async (payload: {
 };
 
 const requestRide = async (riderId: string, payload: Partial<IRideRequest>) => {
-  // Check if rider has active ride
-  const activeRide = await RideRequest.findOne({
-    rider: riderId,
-    status: {
-      $in: [
-        RideRequestStatus.REQUESTED,
-        RideRequestStatus.ACCEPTED,
-        RideRequestStatus.PICKED_UP,
-        RideRequestStatus.IN_TRANSIT,
-      ],
-    },
-  });
-
-  if (activeRide) {
-    throw new AppError(
-      httpStatus.BAD_REQUEST,
-      "You already have an active ride request",
-    );
-  }
-
   const rideRequest = await RideRequest.create({
     ...payload,
     rider: riderId,
@@ -131,6 +111,10 @@ const updateRideStatus = async (
 
   // Define valid transitions
   const validTransitions: Record<RideRequestStatus, RideRequestStatus[]> = {
+    [RideRequestStatus.PENDING]: [
+      RideRequestStatus.REQUESTED,
+      RideRequestStatus.CANCELLED,
+    ],
     [RideRequestStatus.REQUESTED]: [
       RideRequestStatus.ACCEPTED,
       RideRequestStatus.CANCELLED,
@@ -288,7 +272,8 @@ const getAllRideRequests = async (query: Record<string, string>) => {
   const queryBuilder = new QueryBuilder(
     RideRequest.find()
       .populate("rider", "name phone")
-      .populate("driver", "name phone"),
+      .populate("driver", "name phone")
+      .populate("user", "name phone email"),
     query,
   );
 
@@ -319,15 +304,16 @@ const getSingleRideRequest = async (id: string) => {
 
 const getAvailableRides = async (query: Record<string, string>) => {
   const queryBuilder = new QueryBuilder(
-    RideRequest.find({ status: RideRequestStatus.REQUESTED }).populate(
+    RideRequest.find().populate(
       "rider",
       "name phone rating",
+      "user"
     ),
     query,
   );
 
   const result = queryBuilder.filter().sort().fields().pagination();
-
+  console.log(queryBuilder, "riderequest service ")
   const [data, meta] = await Promise.all([
     result.build(),
     queryBuilder.getMeta(),
@@ -337,6 +323,25 @@ const getAvailableRides = async (query: Record<string, string>) => {
     data,
     meta,
   };
+};
+
+const getUserActiveRideRequests = async (userId: string) => {
+  const activeRideRequests = await RideRequest.find({
+    user: userId,
+    status: {
+      $in: [
+        RideRequestStatus.REQUESTED,
+        RideRequestStatus.ACCEPTED,
+        RideRequestStatus.PICKED_UP,
+        RideRequestStatus.IN_TRANSIT,
+      ],
+    },
+  })
+    .populate("rider", "name email phone picture")
+    .populate("driver", "name email phone picture")
+    .sort({ createdAt: -1 });
+
+  return activeRideRequests;
 };
 
 export const RideRequestServices = {
@@ -349,5 +354,6 @@ export const RideRequestServices = {
   getAllRideRequests,
   getSingleRideRequest,
   getAvailableRides,
+  getUserActiveRideRequests,
   estimateFare,
 };

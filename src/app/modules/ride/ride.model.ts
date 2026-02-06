@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { model, Schema } from "mongoose";
 import {
   IRide,
@@ -40,7 +41,6 @@ const rideSchema = new Schema<IRide>(
     },
     slug: {
       type: String,
-      required: true,
       unique: true,
     },
     description: {
@@ -108,7 +108,12 @@ const rideSchema = new Schema<IRide>(
     },
     driver: {
       type: Schema.Types.ObjectId,
+      ref: "Driver",
+    },
+    user: {
+      type: Schema.Types.ObjectId,
       ref: "User",
+      required: true,
     },
     status: {
       type: String,
@@ -127,7 +132,7 @@ const rideSchema = new Schema<IRide>(
 
 rideSchema.pre("save", async function () {
   if (this.isModified("title")) {
-    const baseSlug = this.title.toLowerCase().split(" ").join("-");
+    const baseSlug = (this as any).title.toLowerCase().split(" ").join("-");
     let slug = `${baseSlug}-ride`;
 
     let counter = 0;
@@ -135,12 +140,12 @@ rideSchema.pre("save", async function () {
       slug = `${baseSlug}-ride-${counter++}`;
     }
 
-    this.slug = slug;
+    (this as any).slug = slug;
   }
 });
 
 rideSchema.pre("findOneAndUpdate", async function () {
-  const ride = this.getUpdate() as IRide;
+  const ride = this.getUpdate() as any;
 
   if (ride.title) {
     const baseSlug = ride.title.toLowerCase().split(" ").join("-");

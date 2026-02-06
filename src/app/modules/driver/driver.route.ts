@@ -40,6 +40,11 @@ router.get(
   checkAuth(Role.ADMIN, Role.SUPER_ADMIN),
   DriverControllers.getAllDrivers,
 );
+router.get(
+  "/all-rides-pending",
+  checkAuth(Role.DRIVER, Role.ADMIN, Role.SUPER_ADMIN),
+  DriverControllers.getAllRidesPending,
+);
 
 router.get(
   "/:id",

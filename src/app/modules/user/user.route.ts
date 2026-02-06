@@ -33,9 +33,11 @@ router.patch("/:id/block", checkAuth(Role.ADMIN, Role.SUPER_ADMIN), UserControll
 router.patch("/:id/unblock", checkAuth(Role.ADMIN, Role.SUPER_ADMIN), UserController.unblockUser);
 
 
-
 // Delete user (Admin only)
 router.delete("/:id", checkAuth(Role.ADMIN, Role.SUPER_ADMIN), UserController.deleteUser);
+
+// Update user role (Admin only)
+router.patch("/:id/role", checkAuth(Role.ADMIN, Role.SUPER_ADMIN), UserController.updateUserRole);
 
 router.get("/:id",checkAuth(Role.ADMIN , Role.SUPER_ADMIN), UserController.getSingleUser);
   

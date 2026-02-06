@@ -4,6 +4,7 @@ import { catchAsync } from "../../utils/catchAsync";
 import { sendResponse } from "../../utils/sendResponse";
 import { RideService } from "./ride.service";
 import { IRide } from "./ride.interface";
+import { JwtPayload } from "jsonwebtoken";
 
 // RideType Controllers
 const createRideType = catchAsync(async (req: Request, res: Response) => {
@@ -67,8 +68,10 @@ const createRide = catchAsync(async (req: Request, res: Response) => {
         body : req.body
     })
 
+    const user = req.user as JwtPayload | undefined;
     const payload : IRide = {
         ...req.body,
+        user: (req.body as any).user ?? user?.userId,
         images : (req.files as Express.Multer.File[])?.map((file : any) => file.path)
     }
     const result = await RideService.createRide(payload);
@@ -88,6 +91,35 @@ const getAllRides = catchAsync(async (req: Request, res: Response) => {
         statusCode: 200,
         success: true,
         message: "Rides retrieved",
+        data: result.data,
+        meta: result.meta,
+    });
+});
+
+const getMyRides = catchAsync(async (req: Request, res: Response) => {
+    const user = req.user as JwtPayload | undefined;
+    const query = req.query;
+    const result = await RideService.getRideByUserId(
+        user?.userId as string,
+        query as Record<string, string>
+    );
+    sendResponse(res, {
+        statusCode: 200,
+        success: true,
+        message: "Rides retrieved for user",
+        data: result.data,
+        meta: result.meta,
+    });
+});
+
+const getRideByUserId = catchAsync(async (req: Request, res: Response) => {
+    const { userId } = req.params;
+    const query = req.query;
+    const result = await RideService.getRideByUserId(userId, query as Record<string, string>);
+    sendResponse(res, {
+        statusCode: 200,
+        success: true,
+        message: "Rides retrieved for user",
         data: result.data,
         meta: result.meta,
     });
@@ -140,8 +172,10 @@ const getSingleRide = catchAsync(async (req: Request, res: Response) => {
 const updateRide = catchAsync(async (req: Request, res: Response) => {
     const id = req.params.id;
 
+        const user = req.user as JwtPayload | undefined;
         const payload : IRide = {
         ...req.body,
+        user: (req.body as any).user ?? user?.userId,
         images : (req.files as Express.Multer.File[])?.map((file : any) => file.path)
     }
     const result = await RideService.updateRide(id, payload);
@@ -174,10 +208,12 @@ export const RideController = {
     // Ride controllers
     createRide,
     getAllRides,
+    getMyRides,
     getRidesByDivision,
     getRidesByDistrict,
     getRidesByStatus,
     getSingleRide,
     updateRide,
     deleteRide,
+    getRideByUserId
 };

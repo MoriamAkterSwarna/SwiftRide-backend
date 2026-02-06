@@ -6,7 +6,7 @@ const rideRequestSchema = new Schema<IRideRequest>(
     rider: {
       type: Schema.Types.ObjectId,
       ref: "User",
-      required: true,
+      // required: true,
     },
     driver: {
       type: Schema.Types.ObjectId,
@@ -69,6 +69,11 @@ const rideRequestSchema = new Schema<IRideRequest>(
     cancellationReason: {
       type: String,
     },
+    user:{
+      type: Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    }
   },
   {
     timestamps: true,

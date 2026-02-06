@@ -76,6 +76,19 @@ const getMyRideHistory = catchAsync(async (req, res) => {
   });
 });
 
+const getUserActiveRideRequests = catchAsync(async (req, res) => {
+  const user = req.user as JwtPayload;
+  const result = await RideRequestServices.getUserActiveRideRequests(
+    user.userId,
+  );
+  sendResponse(res, {
+    statusCode: StatusCodes.OK,
+    success: true,
+    message: "Active ride requests fetched successfully",
+    data: result,
+  });
+});
+
 const getMyDriverRides = catchAsync(async (req, res) => {
   const user = req.user as JwtPayload;
   const result = await RideRequestServices.getDriverRides(
@@ -119,12 +132,17 @@ const getAvailableRides = catchAsync(async (req, res) => {
   const result = await RideRequestServices.getAvailableRides(
     req.query as Record<string, string>,
   );
+  const availableRides = result.data.filter(
+    (ride) => ride.status === RideRequestStatus.REQUESTED,
+  );
+  console.log(availableRides, "availableRides");
+  
   sendResponse(res, {
     statusCode: StatusCodes.OK,
     success: true,
     message: "Available rides fetched successfully",
     meta: result.meta,
-    data: result.data,
+    data: availableRides,
   });
 });
 
@@ -144,6 +162,7 @@ export const RideRequestControllers = {
   updateRideStatus,
   cancelRide,
   getMyRideHistory,
+  getUserActiveRideRequests,
   getMyDriverRides,
   getAllRideRequests,
   getSingleRideRequest,

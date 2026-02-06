@@ -9,7 +9,6 @@ import { PaymentRoutes } from "../modules/payment/payment.route";
 import { OtpRoutes } from "../modules/otp/otp.route";
 import { StatsRoutes } from "../modules/stats/stats.route";
 import { DriverRoutes } from "../modules/driver/driver.route";
-import { RideRequestRoutes } from "../modules/rideRequest/rideRequest.route";
 import { ReviewRoutes } from "../modules/review/review.route";
 import { FareEstimationRoutes } from "../modules/fareEstimation/fareEstimation.route";
 import { DriverLocationRoutes } from "../modules/driverLocation/driverLocation.route";
@@ -56,10 +55,10 @@ const moduleRoutes = [
     path: "/driver",
     route: DriverRoutes,
   },
-  {
-    path: "/ride-request",
-    route: RideRequestRoutes,
-  },
+  // {
+  //   path: "/ride-request",
+  //   route: RideRequestRoutes,
+  // },
   {
     path: "/review",
     route: ReviewRoutes,

@@ -184,6 +184,15 @@ const getDriverByUserId = async (userId: string) => {
   return result;
 };
 
+// Get all rides pending
+const getAllRidesPendingFromDB = async (query: Record<string, string>) => {
+  // Get all ride requests with rider information
+  const result = await RideRequest.find()
+    .populate("rider", "name email phone picture");
+  console.log("Found ride requests:", result.length, result);
+  return result;
+};
+
 export const DriverServices = {
   createDriverIntoDB,
   getAllDriversFromDB,
@@ -196,4 +205,5 @@ export const DriverServices = {
   reactivateDriver,
   getDriverEarningsHistory,
   getDriverByUserId,
+  getAllRidesPendingFromDB,
 };

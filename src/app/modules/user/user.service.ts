@@ -133,19 +133,47 @@ const getSingleUser = async (id: string) => {
   };
 };
 
-
 const getPendingDriverRequests = async () => {
   const requests = await Driver.find({ status: 'pending' })
     .populate('user', '-password')
     .sort({ createdAt: -1 });
   return requests;
-}
+};
 
 const getMe = async (userId: string) => {
   const user = await User.findById(userId).select("-password");
   return {
     data: user,
   };
+};
+
+const updateUserRole = async (
+  userId: string,
+  newRole: Role,
+  adminId: string
+) => {
+  const user = await User.findById(userId);
+  if (!user) {
+    throw new AppError(httpStatus.NOT_FOUND, "User not found");
+  }
+
+  const admin = await User.findById(adminId);
+  if (!admin || (admin.role !== Role.ADMIN && admin.role !== Role.SUPER_ADMIN)) {
+    throw new AppError(httpStatus.FORBIDDEN, "Not authorized to change user role");
+  }
+
+  // Prevent changing super admin role
+  if (user.role === Role.SUPER_ADMIN) {
+    throw new AppError(httpStatus.FORBIDDEN, "Cannot change Super Admin role");
+  }
+
+  const updatedUser = await User.findByIdAndUpdate(
+    userId,
+    { role: newRole },
+    { new: true }
+  ).select("-password");
+
+  return updatedUser;
 };
 
 // Block/Unblock user (Admin only)
@@ -219,6 +247,7 @@ export const UserServices = {
   getAllUsers,
   updateUser,
   getSingleUser,
+  updateUserRole,
   getMe,
   blockUser,
   unblockUser,

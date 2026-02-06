@@ -55,7 +55,7 @@ export const checkAuth =
       }
 
       // Super admins cannot be blocked
-      const userRole = (verifiedToken as JwtPayload).role;
+      const userRole = isUserExist.role ?? (verifiedToken as JwtPayload).role;
       if (
         userRole !== Role.SUPER_ADMIN &&
         (isUserExist.isActive === IsActive.BLOCKED ||
@@ -82,7 +82,10 @@ export const checkAuth =
         );
       }
 
-      req.user = verifiedToken;
+      req.user = {
+        ...verifiedToken,
+        role: userRole,
+      } as JwtPayload;
 
       next();
     } catch (err) {

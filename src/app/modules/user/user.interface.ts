@@ -40,6 +40,7 @@ export interface IUser {
     drivers?: Types.ObjectId[];
 
     createdAt?: Date;
+    agreeToTerms?: boolean;
 
     
 }

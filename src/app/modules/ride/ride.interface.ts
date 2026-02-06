@@ -35,7 +35,7 @@ export interface IRideType {
 
 export interface IRide {
   title: string;
-  slug: string;
+  slug?: string;
   description?: string;
   images?: string[];
   pickUpLocation: {
@@ -63,6 +63,7 @@ export interface IRide {
   rideType: Types.ObjectId;
   availableSeats?: number;
   driver?: Types.ObjectId;
+  user: Types.ObjectId;
   status?: RideStatus;
   vehicle?: RideVehicle;
   deleteImages?: string[];

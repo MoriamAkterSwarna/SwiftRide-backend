@@ -34,6 +34,12 @@ router.get(
   RideRequestControllers.getMyRideHistory,
 );
 
+router.get(
+  "/user/active",
+  checkAuth(Role.USER, Role.RIDER),
+  RideRequestControllers.getUserActiveRideRequests,
+);
+
 // Driver routes
 router.post(
   "/:requestId/accept",

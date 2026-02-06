@@ -7,11 +7,13 @@ export enum RideRequestStatus {
   IN_TRANSIT = "in_transit",
   COMPLETED = "completed",
   CANCELLED = "cancelled",
+  PENDING = "pending",
 }
 
 export interface IRideRequest {
   rider: Types.ObjectId; // User requesting the ride
-  driver?: Types.ObjectId; // Driver who accepted
+  driver?: Types.ObjectId; // Driver who accepted 
+  user?: Types.ObjectId; // User who created the request
   pickupLocation: {
     address: string;
     coordinates?: {

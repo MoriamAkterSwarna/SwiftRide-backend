@@ -71,7 +71,15 @@ const createRide = async (payload: IRide) => {
 };
 
 const getAllRides = async (query: Record<string, string>) => {
-  const queryBuilder = new QueryBuilder(Ride.find(), query);
+  const queryBuilder = new QueryBuilder(
+    Ride.find()
+      .populate("division")
+      .populate("district")
+      .populate("rideType")
+      // .populate("rider")
+      .populate("user"), 
+    query
+  );
 
   const rides = await queryBuilder
     .search(rideSearchableFields)
@@ -79,9 +87,6 @@ const getAllRides = async (query: Record<string, string>) => {
     .sort()
     .fields()
     .pagination();
-  // .build();
-
-  // const meta = await queryBuilder.getMeta();
 
   const [data, meta] = await Promise.all([
     rides.build(),
@@ -94,6 +99,34 @@ const getAllRides = async (query: Record<string, string>) => {
   };
 };
 
+const getRideByUserId = async (userId: string, query: Record<string, string>) => {
+  const queryBuilder = new QueryBuilder(
+    Ride.find({ user: userId })
+      .populate("division")
+      .populate("district")
+      .populate("rideType")
+      .populate("user"),
+    query
+  );
+
+  const rides = await queryBuilder
+    .search(rideSearchableFields)
+    .filter()
+    .sort()
+    .fields()
+    .pagination();
+
+  const [data, meta] = await Promise.all([
+    rides.build(),
+    queryBuilder.getMeta(),
+  ]);
+
+  return {
+    data,
+    meta,
+  };
+
+}
 const getRidesByDivision = async (divisionId: string) => {
   const rides = await Ride.find({ division: divisionId })
     .populate("division")
@@ -218,4 +251,6 @@ export const RideService = {
   getSingleRide,
   updateRide,
   deleteRide,
+
+  getRideByUserId
 };

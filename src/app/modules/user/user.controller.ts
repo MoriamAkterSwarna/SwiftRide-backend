@@ -10,6 +10,7 @@ import { envVars } from "../../config/env";
 // import AppError from "../../ErrorHelpers/appError";
 import { JwtPayload } from "jsonwebtoken";
 import { User } from "./user.model";
+import { Role } from "./user.interface";
 
 const createUser = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
@@ -155,6 +156,24 @@ const deleteUser = catchAsync(
 );
 
 
+const updateUserRole = catchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const { userId } = req.params;
+    const { role: newRole } = req.body;
+    const decodedToken = req.user as JwtPayload;
+    
+    const user = await UserServices.updateUserRole(userId, newRole as Role, decodedToken.userId);
+
+    sendResponse(res, {
+      statusCode: httpStatus.OK,
+      success: true,
+      message: "User role updated successfully",
+      data: user,
+    });
+  }
+);
+
+
 export const UserController = {
   createUser,
   getAllUsers,
@@ -165,4 +184,5 @@ export const UserController = {
   blockUser,
   unblockUser,
   deleteUser,
+  updateUserRole,
 };
