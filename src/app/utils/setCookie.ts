@@ -9,23 +9,19 @@ export interface AuthTokens{
 }
 
 export const setAuthCookie = (res: Response, tokenInfo: AuthTokens) => {
-    
-    if(tokenInfo.accessToken){
-        res.cookie('accessToken', tokenInfo.accessToken, {
-            httpOnly: true,
-            // secure: false, // Set to true if using HTTPS 
+    const isProd = envVars.NODE_ENV === "production";
+    const cookieOptions = {
+        httpOnly: true,
+        secure: isProd,
+        sameSite: isProd ? "none" : "lax",
+        path: "/",
+    } as const;
 
-            secure: true, 
-            sameSite: "none",
-            
-        });
+    if (tokenInfo.accessToken) {
+        res.cookie("accessToken", tokenInfo.accessToken, cookieOptions);
     }
-    if(tokenInfo.refreshToken){
-        res.cookie('refreshToken', tokenInfo.refreshToken, {
-            httpOnly: true,
-            secure: true, 
-            sameSite: "none",
-        });
+    if (tokenInfo.refreshToken) {
+        res.cookie("refreshToken", tokenInfo.refreshToken, cookieOptions);
     }
 };
 

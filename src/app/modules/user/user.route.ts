@@ -24,6 +24,8 @@ router.get(
 
 router.get("/me",checkAuth(...Object.values(Role)), UserController.getMe);
 
+router.patch("/me", checkAuth(...Object.values(Role)), UserController.updateMe);
+
 router.patch("/:id",checkAuth(...Object.values(Role)), UserController.updateUser);
 
 

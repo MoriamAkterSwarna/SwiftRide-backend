@@ -110,6 +110,26 @@ const getMe = catchAsync(
   }
 );
 
+const updateMe = catchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const decodedToken = req.user as JwtPayload;
+    const payload = req.body;
+
+    const user = await UserServices.updateUser(
+      decodedToken.userId,
+      payload,
+      decodedToken
+    );
+
+    sendResponse(res, {
+      statusCode: httpStatus.OK,
+      success: true,
+      message: "User updated successfully",
+      data: user,
+    });
+  }
+);
+
 const blockUser = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
     const userId = req.params.id;
@@ -181,6 +201,7 @@ export const UserController = {
   updateUser,
   getSingleUser,
   getMe,
+  updateMe,
   blockUser,
   unblockUser,
   deleteUser,

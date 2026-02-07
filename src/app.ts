@@ -31,13 +31,29 @@ app.use(
 app.use(passport.initialize());
 app.use(passport.session());
 app.use(cookieParser());
-app.use(express.json());
+app.use(express.json({ limit: "5mb" }));
 app.set("trust proxy", 1);
-app.use(express.urlencoded({ extended: true }));
-app.use(cors( {
-  origin: envVars.FRONTEND_URL,
-  credentials: true
-}))
+app.use(express.urlencoded({ extended: true, limit: "5mb" }));
+
+const allowedOrigins = [
+  envVars.FRONTEND_URL,
+  "http://localhost:5173",
+  "http://127.0.0.1:5173",
+].filter(Boolean);
+
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      if (!origin || allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+      return callback(new Error("Not allowed by CORS"));
+    },
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
+  })
+);
 
 
 

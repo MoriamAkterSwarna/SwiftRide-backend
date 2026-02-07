@@ -107,17 +107,16 @@ const getNewAccessToken = catchAsync(
 
 const logoutUser = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
-    res.clearCookie("accessToken", {
+    const isProd = envVars.NODE_ENV === "production";
+    const cookieOptions = {
       httpOnly: true,
-      secure: false,
-      sameSite: "lax",
-    });
+      secure: isProd,
+      sameSite: isProd ? "none" : "lax",
+      path: "/",
+    } as const;
 
-    res.clearCookie("refreshToken", {
-      httpOnly: true,
-      secure: false,
-      sameSite: "lax",
-    });
+    res.clearCookie("accessToken", cookieOptions);
+    res.clearCookie("refreshToken", cookieOptions);
 
     sendResponse(res, {
       statusCode: httpStatus.CREATED,

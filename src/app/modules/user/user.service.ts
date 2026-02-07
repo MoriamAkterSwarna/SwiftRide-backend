@@ -45,13 +45,14 @@ const updateUser = async (
 ) => {
 
 
+  const tokenUserId = (decodedToken as JwtPayload & { userId?: string; id?: string }).userId ||
+    (decodedToken as JwtPayload & { userId?: string; id?: string }).id;
+
   if(decodedToken.role === Role.USER || decodedToken.role === Role.DRIVER){
-    if(decodedToken.id !== userId){
+    if(tokenUserId !== userId){
       throw new AppError(httpStatus.FORBIDDEN, "You are not authorized to update this user");
     }
   }
-
-
 
   const ifUserExist = await User.findById(userId);
   if (!ifUserExist) {
@@ -71,6 +72,11 @@ const updateUser = async (
   * role can only be updated by admin or super admin
   
   */
+
+  // Prevent email updates
+  if (payload.email) {
+    delete payload.email;
+  }
 
   if (payload.role) {
     if (decodedToken.role === Role.USER || decodedToken.role === Role.DRIVER) {
