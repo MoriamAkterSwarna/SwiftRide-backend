@@ -156,6 +156,18 @@ const estimateFare = catchAsync(async (req, res) => {
   });
 });
 
+const assignDriver = catchAsync(async (req, res) => {
+  const { id } = req.params;
+  const { driverId } = req.body;
+  const result = await RideRequestServices.assignDriver(id, driverId);
+  sendResponse(res, {
+    statusCode: StatusCodes.OK,
+    success: true,
+    message: "Driver assigned successfully",
+    data: result,
+  });
+});
+
 export const RideRequestControllers = {
   requestRide,
   acceptRide,
@@ -168,4 +180,5 @@ export const RideRequestControllers = {
   getSingleRideRequest,
   getAvailableRides,
   estimateFare,
+  assignDriver,
 };

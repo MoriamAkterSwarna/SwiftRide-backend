@@ -73,6 +73,13 @@ router.get(
   RideRequestControllers.getAllRideRequests,
 );
 
+router.patch(
+  "/:id/assign-driver",
+  checkAuth(Role.ADMIN, Role.SUPER_ADMIN),
+  validateRequest(RideRequestValidations.assignDriverValidationSchema),
+  RideRequestControllers.assignDriver,
+);
+
 router.get(
   "/:id",
   checkAuth(Role.USER, Role.RIDER, Role.DRIVER, Role.ADMIN, Role.SUPER_ADMIN),

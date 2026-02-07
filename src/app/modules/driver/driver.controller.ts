@@ -3,7 +3,7 @@ import { catchAsync } from "../../utils/catchAsync";
 import { sendResponse } from "../../utils/sendResponse";
 import { DriverServices } from "./driver.service";
 import { JwtPayload } from "jsonwebtoken";
-import { RideRequestStatus } from "../rideRequest/rideRequest.interface";
+
 
 const createDriver = catchAsync(async (req, res) => {
   const user = req.user as JwtPayload;
@@ -170,6 +170,7 @@ const getMyDriverProfile = catchAsync(async (req, res) => {
     data: result,
   });
 });
+
 
 export const DriverControllers = {
   createDriver,

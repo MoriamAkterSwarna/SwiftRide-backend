@@ -271,8 +271,8 @@ const getDriverRides = async (
 const getAllRideRequests = async (query: Record<string, string>) => {
   const queryBuilder = new QueryBuilder(
     RideRequest.find()
-      .populate("rider", "name phone")
-      .populate("driver", "name phone")
+      .populate("rider", "name phone email")
+      .populate("driver", "name email phone role")  // driver directly refs User now
       .populate("user", "name phone email"),
     query,
   );
@@ -298,7 +298,8 @@ const getAllRideRequests = async (query: Record<string, string>) => {
 const getSingleRideRequest = async (id: string) => {
   const result = await RideRequest.findById(id)
     .populate("rider", "name phone email")
-    .populate("driver", "name phone email");
+    .populate("driver", "name email phone role")  // driver directly refs User
+    .populate("user", "name email phone");
   return result;
 };
 
@@ -344,6 +345,61 @@ const getUserActiveRideRequests = async (userId: string) => {
   return activeRideRequests;
 };
 
+const assignDriver = async (requestId: string, driverId: string) => {
+  console.log("[assignDriver] Starting assignment - rideId:", requestId, "driverId (User ID):", driverId);
+  
+  // driverId is actually a User ID from the frontend, find Driver by user field
+  const driver = await Driver.findOne({ user: driverId }).populate("user");
+  console.log("[assignDriver] Driver found:", driver ? "yes" : "no");
+  console.log("[assignDriver] Driver data:", driver);
+
+  if (!driver) {
+    throw new AppError(httpStatus.NOT_FOUND, "Driver not found");
+  }
+
+  if (!driver.user) {
+    throw new AppError(httpStatus.NOT_FOUND, "Driver user not found");
+  }
+
+  if (driver.status !== "approved") {
+    throw new AppError(httpStatus.FORBIDDEN, "Driver is not approved");
+  }
+
+  const rideRequest = await RideRequest.findById(requestId);
+  console.log("[assignDriver] Ride found:", rideRequest ? "yes" : "no");
+
+  if (!rideRequest) {
+    throw new AppError(httpStatus.NOT_FOUND, "Ride request not found");
+  }
+
+  if (
+    rideRequest.status !== RideRequestStatus.REQUESTED &&
+    rideRequest.status !== RideRequestStatus.ACCEPTED
+  ) {
+    throw new AppError(
+      httpStatus.BAD_REQUEST,
+      "Cannot assign driver to ride in current status"
+    );
+  }
+
+  console.log("[assignDriver] Setting driver field to User ID:", driverId);
+
+  const updatedRideRequest = await RideRequest.findByIdAndUpdate(
+    requestId,
+    {
+      driver: driverId,  // ✅ Store User ID directly (driverId is already a User ID)
+      status: RideRequestStatus.ACCEPTED,
+      acceptedAt: new Date(),
+    },
+    { new: true }
+  )
+    .populate("driver", "name email phone")
+    .populate("rider", "name email phone");
+
+  console.log("[assignDriver] Updated ride with driver:", JSON.stringify(updatedRideRequest, null, 2));
+  return updatedRideRequest;
+};
+
 export const RideRequestServices = {
   requestRide,
   acceptRide,
@@ -356,4 +412,5 @@ export const RideRequestServices = {
   getAvailableRides,
   getUserActiveRideRequests,
   estimateFare,
+  assignDriver,
 };

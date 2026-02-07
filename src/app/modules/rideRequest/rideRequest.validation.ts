@@ -52,8 +52,17 @@ const cancelRideValidationSchema = z.object({
   }),
 });
 
+const assignDriverValidationSchema = z.object({
+  body: z.object({
+    driverId: z.string({
+      required_error: "Driver ID is required",
+    }),
+  }),
+});
+
 export const RideRequestValidations = {
   createRideRequestValidationSchema,
   updateRideStatusValidationSchema,
   cancelRideValidationSchema,
+  assignDriverValidationSchema,
 };
