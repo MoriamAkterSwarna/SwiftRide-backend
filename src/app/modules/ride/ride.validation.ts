@@ -4,7 +4,7 @@ import { z } from "zod";
 // In ride.validation.ts
 export const createRideTypeSchema = z.object({
     body: z.object({
-        rideVehicle: z.enum(["Bike", "Car", "Bus", "Van"]),
+        rideVehicle: z.enum(["Bike", "Car"]),
         placeType: z.enum(["Private Place", "Public Place", "Inside City", "Outside City", "Airport"]),
         totalGuest: z.number().optional(),
     }),
@@ -12,7 +12,7 @@ export const createRideTypeSchema = z.object({
 
 export const updateRideTypeSchema = z.object({
     body: z.object({
-        rideVehicle: z.enum(["Bike", "Car", "Bus", "Van"]).optional(),
+        rideVehicle: z.enum(["Bike", "Car"]).optional(),
         placeType: z.enum(["Private Place", "Public Place", "Inside City", "Outside City", "Airport"]).optional(),
         totalGuest: z.number().optional(),
     }),
@@ -46,7 +46,7 @@ export const createRideSchema = z.object({
         driver: z.string().optional(),
         user: z.string(),
         status: z.enum(["Active", "Completed", "Cancelled"]).optional(),
-        vehicle: z.enum(["Bike", "Car", "Bus", "Van"]).optional(),
+        vehicle: z.enum(["Bike", "Car"]).optional(),
     }),
 });
 
@@ -70,7 +70,7 @@ export const updateRideSchema = z.object({
         driver: z.string().optional(),
         user: z.string(),
         status: z.enum(["Active", "Completed", "Cancelled"]).optional(),
-        vehicle: z.enum(["Bike", "Car", "Bus", "Van"]).optional(),
+        vehicle: z.enum(["Bike", "Car"]).optional(),
         deleteImages: z.array(z.string()).optional(),
     }),
 });

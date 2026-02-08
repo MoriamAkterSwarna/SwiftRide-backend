@@ -147,6 +147,7 @@ const changePassword = catchAsync(
     await AuthService.changePassword(
       oldPassword,
       newPassword,
+      
       decodedToken as JwtPayload,
     );
 
