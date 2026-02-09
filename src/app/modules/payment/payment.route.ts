@@ -15,5 +15,6 @@ router.post('/cancel', PaymentController.cancelPayment)
 router.get('/invoice/:paymentId', checkAuth(...Object.values(Role)) ,PaymentController.getInvoiceDownloadUrl)
 router.post('/validate-payment', PaymentController.validatePayment)
 router.get('/history', checkAuth(...Object.values(Role)), PaymentController.getPaymentHistory)
+router.get('/all', checkAuth(Role.ADMIN, Role.SUPER_ADMIN), PaymentController.getAllPayments)
 
 export  const PaymentRoutes = router;

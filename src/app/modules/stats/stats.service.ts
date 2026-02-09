@@ -218,13 +218,13 @@ const getPaymentStats = async () => {
     ])
 
     const paymentGatewayDataPromise = Payment.aggregate([
-        // stage 1: group the payment status and count the total payments
-        {
-            $group: {
-                _id: {$ifNull: ["$paymentGatewayData.status", "UNKNOWN"]},
-                count: { $sum: 1 },
-            },
+      // stage 1: group by payment method and count the total payments
+      {
+        $group: {
+          _id: { $ifNull: ["$paymentGatewayData.method", "UNKNOWN"] },
+          count: { $sum: 1 },
         },
+      },
     ])
    
 

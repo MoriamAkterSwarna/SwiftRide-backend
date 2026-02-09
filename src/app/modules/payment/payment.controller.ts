@@ -112,6 +112,16 @@ const getPaymentHistory = catchAsync(async (req: Request, res: Response) => {
     });
 });
 
+const getAllPayments = catchAsync(async (req: Request, res: Response) => {
+    const result = await PaymentServices.getAllPayments();
+    sendResponse(res, {
+        statusCode: 200,
+        success: true,
+        message: "All payments fetched successfully",
+        data: result,
+    });
+});
+
 export const PaymentController = {
     initPayment,
     successPayment,
@@ -119,5 +129,6 @@ export const PaymentController = {
     failPayment,
     cancelPayment,
     validatePayment,
-    getPaymentHistory
+    getPaymentHistory,
+    getAllPayments
 };

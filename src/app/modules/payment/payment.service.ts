@@ -434,6 +434,22 @@ const getPaymentHistory = async (userId: string) => {
   return payments;
 };
 
+const getAllPayments = async () => {
+  const payments = await Payment.find()
+    .populate("ride", "title cost availableSeats user")
+    .populate("user", "name email phone")
+    .populate({
+      path: "booking",
+      populate: {
+        path: "user",
+        select: "name email phone",
+      },
+    })
+    .sort({ createdAt: -1 });
+
+  return payments;
+};
+
 export const PaymentServices = {
   initPayment,
   successPayment,
@@ -441,4 +457,5 @@ export const PaymentServices = {
   failPayment,
   cancelPayment,
   getPaymentHistory,
+  getAllPayments,
 };
