@@ -17,55 +17,93 @@ import { PaymentStatus } from "./payment.interface";
 import { Payment } from "./payment.model";
 import httpStatus from "http-status-codes";
 
+let paymentIndexesSynced = false;
+
 
 
 const initPayment = async (rideId: string) => {
-  // Look up existing unpaid payment for this ride
-  let payment = await Payment.findOne({ 
-    ride: rideId,
-    status: PaymentStatus.Unpaid 
-  });
+  if (!paymentIndexesSynced) {
+    try {
+      await Payment.syncIndexes();
+      paymentIndexesSynced = true;
+      console.log("Payment indexes synced");
+    } catch (indexError) {
+      console.error("Payment index sync failed:", indexError);
+    }
+  }
 
-  // If no unpaid payment exists, create a new one
-  if (!payment) {
-    const ride = await Ride.findById(rideId).populate("user");
+  const ride = await Ride.findById(rideId).populate("user");
 
-    if (!ride) {
-      throw new AppError(httpStatus.NOT_FOUND, "Ride not found");
+  if (!ride) {
+    throw new AppError(httpStatus.NOT_FOUND, "Ride not found");
+  }
+
+  if (!ride.user) {
+    throw new AppError(httpStatus.BAD_REQUEST, "Ride has no valid user");
+  }
+
+  const amount = (ride.cost || 0) * (ride.availableSeats || 1);
+
+  // Check latest payment for this ride
+  let payment = await Payment.findOne({ ride: rideId }).sort({ createdAt: -1 });
+
+  if (payment) {
+    if (payment.status === PaymentStatus.Paid) {
+      throw new AppError(httpStatus.BAD_REQUEST, "Payment already completed for this ride");
     }
 
-    // Create a unique transaction ID
+    if (payment.status === PaymentStatus.Unpaid) {
+      console.log("♻️ Reusing existing unpaid payment:", payment._id);
+    } else {
+      const transactionId = `RIDE-${rideId}-${Date.now()}-${Math.random().toString(36).substring(7)}`;
+      payment = await Payment.findByIdAndUpdate(
+        payment._id,
+        {
+          status: PaymentStatus.Unpaid,
+          transactionId,
+          amount,
+        },
+        { new: true, runValidators: true }
+      );
+      console.log("♻️ Reset previous payment for retry:", payment?._id);
+    }
+  } else {
     const transactionId = `RIDE-${rideId}-${Date.now()}-${Math.random().toString(36).substring(7)}`;
-    
     try {
       payment = await Payment.create({
         ride: rideId,
         user: ride.user,
-        transactionId: transactionId,
-        amount: (ride.cost || 0) * (ride.availableSeats || 1),
+        transactionId,
+        amount,
         status: PaymentStatus.Unpaid,
       });
+      console.log("✅ New payment created successfully:", payment._id);
     } catch (createError: any) {
-      // If duplicate error due to race condition, try to find the payment again
-      if (createError.code === 11000) {
-        payment = await Payment.findOne({ 
-          ride: rideId,
-          status: PaymentStatus.Unpaid 
-        });
-        if (!payment) {
-          throw new AppError(httpStatus.BAD_REQUEST, "Unable to create payment. Please try again in a moment.");
+      if (createError?.code === 11000) {
+        try {
+          await Payment.syncIndexes();
+          paymentIndexesSynced = true;
+          console.log("Payment indexes re-synced after duplicate key");
+        } catch (indexError) {
+          console.error("Payment index re-sync failed:", indexError);
         }
+
+        payment = await Payment.create({
+          ride: rideId,
+          user: ride.user,
+          transactionId: `RIDE-${rideId}-${Date.now()}-${Math.random().toString(36).substring(7)}`,
+          amount,
+          status: PaymentStatus.Unpaid,
+        });
+        console.log("✅ New payment created successfully (after index sync):", payment._id);
       } else {
         throw createError;
       }
     }
   }
 
-  // Get ride details for payment info
-  const ride = await Ride.findById(rideId).populate("user");
-
-  if (!ride) {
-    throw new AppError(httpStatus.NOT_FOUND, "Ride not found");
+  if (!payment) {
+    throw new AppError(httpStatus.INTERNAL_SERVER_ERROR, "Failed to create or retrieve payment");
   }
 
   // Extract user data with fallbacks
@@ -117,79 +155,170 @@ const successPayment = async (query: Record<string, string>) => {
   session.startTransaction();
 
   try {
+    // 1. Update payment status
     const updatedPayment = await Payment.findOneAndUpdate(
       { transactionId: query.transactionId },
       { status: PaymentStatus.Paid },
-      { session }
-    );
+      { session, new: true }
+    ).populate("ride").populate("user");
 
-    const updatedBooking = await Booking.findByIdAndUpdate(
-      updatedPayment?.booking,
-      { status: BookingStatus.COMPLETED },
-      {new: true, runValidators: true, session }
-    )
-    .populate("ride", "title")
-    .populate("user", "name email")
+    if(!updatedPayment){
+      throw new AppError(httpStatus.NOT_FOUND, "Payment not found");
+    }
 
+    console.log("✅ Payment marked as PAID");
+    console.log("📋 Payment details - Has booking:", !!updatedPayment.booking, "Has ride:", !!updatedPayment.ride);
 
+    // 2. Handle BOOKING payment flow
+    if (updatedPayment.booking) {
+      console.log("🎫 Processing BOOKING payment...");
+      
+      const updatedBooking = await Booking.findByIdAndUpdate(
+        updatedPayment.booking,
+        { status: BookingStatus.COMPLETED },
+        { new: true, runValidators: true, session }
+      )
+      .populate("ride", "title")
+      .populate("user", "name email");
 
       if(!updatedBooking){
         throw new AppError(httpStatus.NOT_FOUND, "Booking not found");
       }
 
-      if(!updatedPayment){
-        throw new AppError(httpStatus.NOT_FOUND, "Payment not found");
-      }
-
-     const invoiceData: IInvoiceData = {
+      const invoiceData: IInvoiceData = {
         bookingDate: updatedBooking.createdAt as Date,
         guestCount: updatedBooking.guestCount,
         totalAmount: updatedPayment.amount,
         rideTitle: (updatedBooking?.ride as unknown as IRide).title,
         transactionId: updatedPayment.transactionId,
         customerName: (updatedBooking?.user as unknown as IUser).name,
-      
-    }
+      };
 
-    const pdfBuffer = await generatePdf(invoiceData);
+      // Generate and upload invoice
+      const pdfBuffer = await generatePdf(invoiceData).catch(err => {
+        console.error("⚠️ PDF generation failed:", err.message);
+        return null;
+      });
 
+      if (pdfBuffer) {
+        const cloudinaryResult: any = await uploadBufferToCloudinary(pdfBuffer, "invoice").catch(err => {
+          console.error("⚠️ Cloudinary upload failed:", err.message);
+          return null;
+        });
 
-    const cloudinaryResult:any = await uploadBufferToCloudinary(pdfBuffer, "invoice");
-    // console.log(  cloudinaryResult) 
-
-    if(!cloudinaryResult){
-      throw new AppError(httpStatus.NOT_FOUND, "Cloudinary result not found");
-    }
-
-    await Payment.findOneAndUpdate(
-      updatedPayment?._id,
-      { invoiceUrl: cloudinaryResult.secure_url },
-      { runValidators: true, session }
-    );
-
-    await sendEmail({
-      to: (updatedBooking?.user as unknown as IUser).email,
-      subject: "Your Booking Invoice",
-      templateName: "invoice ",
-      templateData: invoiceData,
-      attachments: [
-        {
-          filename: "invoice.pdf",
-          content: pdfBuffer,
-          contentType: "application/pdf",
+        if(cloudinaryResult?.secure_url) {
+          await Payment.findOneAndUpdate(
+            { _id: updatedPayment._id },
+            { invoiceUrl: cloudinaryResult.secure_url },
+            { runValidators: true, session }
+          );
         }
-      ]
-    })
+      }
 
-    await session.commitTransaction();
-    session.endSession();
-    return {
-      success: true,
-      message: "Payment successful",
-      data: updatedBooking,
-    };
+      // Send email
+      await sendEmail({
+        to: (updatedBooking?.user as unknown as IUser).email,
+        subject: "Your Booking Invoice",
+        templateName: "invoice",
+        templateData: invoiceData,
+        attachments: pdfBuffer ? [
+          {
+            filename: "invoice.pdf",
+            content: pdfBuffer,
+            contentType: "application/pdf",
+          }
+        ] : []
+      }).catch(err => {
+        console.error("⚠️ Email sending failed:", err.message);
+      });
+
+      await session.commitTransaction();
+      session.endSession();
+      
+      return {
+        success: true,
+        message: "Booking payment completed successfully",
+        data: updatedBooking,
+      };
+    }
+
+    // 3. Handle RIDE payment flow
+    else if (updatedPayment.ride) {
+      console.log("🚗 Processing RIDE payment...");
+      
+      const ride = updatedPayment.ride as unknown as IRide;
+      const user = updatedPayment.user as unknown as IUser;
+
+      if(!ride) {
+        throw new AppError(httpStatus.NOT_FOUND, "Ride not found");
+      }
+
+      const invoiceData: IInvoiceData = {
+        bookingDate: new Date(),
+        guestCount: ride.availableSeats || 1,
+        totalAmount: updatedPayment.amount,
+        rideTitle: ride.title,
+        transactionId: updatedPayment.transactionId,
+        customerName: user?.name || "Customer",
+      };
+
+      // Generate and upload invoice
+      const pdfBuffer = await generatePdf(invoiceData).catch(err => {
+        console.error("⚠️ PDF generation failed:", err.message);
+        return null;
+      });
+
+      if (pdfBuffer) {
+        const cloudinaryResult: any = await uploadBufferToCloudinary(pdfBuffer, "invoice").catch(err => {
+          console.error("⚠️ Cloudinary upload failed:", err.message);
+          return null;
+        });
+
+        if(cloudinaryResult?.secure_url) {
+          await Payment.findOneAndUpdate(
+            { _id: updatedPayment._id },
+            { invoiceUrl: cloudinaryResult.secure_url },
+            { runValidators: true, session }
+          );
+        }
+      }
+
+      // Send email
+      if (user?.email) {
+        await sendEmail({
+          to: user.email,
+          subject: "Your Ride Payment Receipt",
+          templateName: "invoice",
+          templateData: invoiceData,
+          attachments: pdfBuffer ? [
+            {
+              filename: "invoice.pdf",
+              content: pdfBuffer,
+              contentType: "application/pdf",
+            }
+          ] : []
+        }).catch(err => {
+          console.error("⚠️ Email sending failed:", err.message);
+        });
+      }
+
+      await session.commitTransaction();
+      session.endSession();
+      
+      return {
+        success: true,
+        message: "Ride payment completed successfully",
+        data: { ride, payment: updatedPayment },
+      };
+    }
+
+    // 4. If neither booking nor ride found
+    else {
+      throw new AppError(httpStatus.NOT_FOUND, "Payment has neither booking nor ride associated");
+    }
+
   } catch (error) {
-    session.abortTransaction();
+    await session.abortTransaction();
     session.endSession();
     throw error;
   } finally {
@@ -221,20 +350,27 @@ const failPayment = async (query: Record<string, string>) => {
     const updatedPayment = await Payment.findOneAndUpdate(
       { transactionId: query.transactionId },
       { status: PaymentStatus.Failed },
-      { session }
+      { session, new: true }
     );
 
-    const updatedBooking = await Booking.findByIdAndUpdate(
-      updatedPayment?.booking,
-      { status: BookingStatus.FAILED },
-      { runValidators: true, session }
-    );
+    // Handle booking payment
+    if (updatedPayment?.booking) {
+      const updatedBooking = await Booking.findByIdAndUpdate(
+        updatedPayment.booking,
+        { status: BookingStatus.FAILED },
+        { runValidators: true, session }
+      );
+      
+      await session.commitTransaction();
+      session.endSession();
+      return { success: false, message: "Booking payment failed", data: updatedBooking };
+    }
 
-   
-
+    // Handle ride payment - just mark payment as failed, no booking to update
     await session.commitTransaction();
     session.endSession();
-    return { success: false, message: "Payment failed", data: updatedBooking };
+    return { success: false, message: "Ride payment failed", data: updatedPayment };
+    
   } catch (error) {
     session.abortTransaction();
     session.endSession();
@@ -252,22 +388,35 @@ const cancelPayment = async (query: Record<string, string>) => {
     const updatedPayment = await Payment.findOneAndUpdate(
       { transactionId: query.transactionId },
       { status: PaymentStatus.Cancelled },
-      { session }
+      { session, new: true }
     );
 
-    const updatedBooking = await Booking.findByIdAndUpdate(
-      updatedPayment?.booking,
-      { status: BookingStatus.CANCELLED },
-      { runValidators: true, session }
-    );
+    // Handle booking payment
+    if (updatedPayment?.booking) {
+      const updatedBooking = await Booking.findByIdAndUpdate(
+        updatedPayment.booking,
+        { status: BookingStatus.CANCELLED },
+        { runValidators: true, session }
+      );
 
+      await session.commitTransaction();
+      session.endSession();
+      return {
+        success: false,
+        message: "Booking payment cancelled",
+        data: updatedBooking,
+      };
+    }
+
+    // Handle ride payment - just mark payment as cancelled
     await session.commitTransaction();
     session.endSession();
     return {
       success: false,
-      message: "Payment cancelled",
-      data: updatedBooking,
+      message: "Ride payment cancelled",
+      data: updatedPayment,
     };
+    
   } catch (error) {
     session.abortTransaction();
     session.endSession();

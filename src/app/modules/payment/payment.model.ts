@@ -19,7 +19,8 @@ const PaymentSchema = new Schema<IPayment>(
     transactionId: {
       type: String,
       required: true,
-      unique: true
+      unique: true,
+      sparse: true  // Allow null values but enforce uniqueness for non-null
     },
     amount: {
       type: Number,
