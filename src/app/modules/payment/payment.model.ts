@@ -6,8 +6,15 @@ const PaymentSchema = new Schema<IPayment>(
     booking: {
       type: Schema.Types.ObjectId,
       ref: "Booking",
+    },
+    ride: {
+      type: Schema.Types.ObjectId,
+      ref: "Ride",
+    },
+    user: {
+      type: Schema.Types.ObjectId,
+      ref: "User",
       required: true,
-      unique: true
     },
     transactionId: {
       type: String,

@@ -58,7 +58,9 @@ constructor(modelQuery: Query<T[], T>, query: Record<string, string>) {
     }
 
     async getMeta () {
-        const totalDocuments = await this.modelQuery.model.countDocuments() 
+        const totalDocuments = await this.modelQuery.model.countDocuments(
+            this.modelQuery.getFilter(),
+        ); 
         const totalPage = Math.ceil(totalDocuments / Number(this.query.limit))
 
 

@@ -1,9 +1,12 @@
 /* eslint-disable @typescript-eslint/no-unused-expressions */
 import { rideSearchableFields } from "./ride.constant";
-import { IRide, IRideType } from "./ride.interface";
+import { IRide, IRideType, RideStatus } from "./ride.interface";
 import { Ride, RideType } from "./ride.model";
 import { QueryBuilder } from "../../utils/QueryBuilder";
 import { deleteImageFromCloudinary } from "../../config/cloudinary.config";
+import AppError from "../../ErrorHelpers/appError";
+import httpStatus from "http-status-codes";
+import { Driver } from "../driver/driver.model";
 
 
 // RideType Services
@@ -127,6 +130,46 @@ const getRideByUserId = async (userId: string, query: Record<string, string>) =>
   };
 
 }
+
+const getDriverRideHistory = async (
+  driverUserId: string,
+  query: Record<string, string>,
+) => {
+  const driver = await Driver.findOne({ user: driverUserId });
+  if (!driver) {
+    throw new AppError(httpStatus.NOT_FOUND, "Driver profile not found");
+  }
+
+  const queryBuilder = new QueryBuilder(
+    Ride.find({
+      driver: driver._id,
+      status: { $in: [RideStatus.ACCEPTED, RideStatus.COMPLETED, RideStatus.CANCELLED] },
+    })
+      .populate("division")
+      .populate("district")
+      .populate("rideType")
+      .populate("user", "name phone picture"),
+    query,
+  );
+
+  const rides = await queryBuilder
+    .search(rideSearchableFields)
+    .filter()
+    .sort()
+    .fields()
+    .pagination();
+
+  const [data, meta] = await Promise.all([
+    rides.build(),
+    queryBuilder.getMeta(),
+  ]);
+
+  return {
+    data,
+    meta,
+  };
+};
+
 const getRidesByDivision = async (divisionId: string) => {
   const rides = await Ride.find({ division: divisionId })
     .populate("division")
@@ -234,6 +277,111 @@ const deleteRide = async (id: string) => {
   return null;
 };
 
+const getAvailableRidesForDriver = async (
+  driverUserId: string,
+  query: Record<string, string>,
+) => {
+  const driver = await Driver.findOne({ user: driverUserId });
+  if (!driver) {
+    throw new AppError(httpStatus.NOT_FOUND, "Driver profile not found");
+  }
+
+  const queryBuilder = new QueryBuilder(
+    Ride.find({
+      status: RideStatus.ACTIVE,
+      $or: [{ driver: { $exists: false } }, { driver: null }],
+      declinedDrivers: { $ne: driver._id },
+    })
+      .populate("division")
+      .populate("district")
+      .populate("rideType")
+      .populate("user", "name phone"),
+    query,
+  );
+
+  const rides = await queryBuilder
+    .search(rideSearchableFields)
+    .filter()
+    .sort()
+    .fields()
+    .pagination();
+
+  const [data, meta] = await Promise.all([
+    rides.build(),
+    queryBuilder.getMeta(),
+  ]);
+
+  return {
+    data,
+    meta,
+  };
+};
+
+const acceptRideByDriver = async (driverUserId: string, rideId: string) => {
+  const driver = await Driver.findOne({ user: driverUserId });
+  if (!driver) {
+    throw new AppError(httpStatus.NOT_FOUND, "Driver profile not found");
+  }
+
+  if (driver.status !== "approved") {
+    throw new AppError(httpStatus.FORBIDDEN, "Driver not approved");
+  }
+
+  if (!driver.isOnline) {
+    throw new AppError(httpStatus.FORBIDDEN, "Driver is offline");
+  }
+
+  const ride = await Ride.findById(rideId);
+  if (!ride) {
+    throw new AppError(httpStatus.NOT_FOUND, "Ride not found");
+  }
+
+  if (ride.status !== RideStatus.ACTIVE) {
+    throw new AppError(httpStatus.BAD_REQUEST, "Ride is not available");
+  }
+
+  if (ride.driver) {
+    throw new AppError(httpStatus.BAD_REQUEST, "Ride already assigned");
+  }
+
+  const updatedRide = await Ride.findByIdAndUpdate(
+    rideId,
+    { driver: driver._id, status: RideStatus.ACCEPTED },
+    { new: true },
+  )
+    .populate("division")
+    .populate("district")
+    .populate("rideType")
+    .populate("user", "name phone")
+    .populate("driver");
+
+  return updatedRide;
+};
+
+const rejectRideByDriver = async (driverUserId: string, rideId: string) => {
+  const driver = await Driver.findOne({ user: driverUserId });
+  if (!driver) {
+    throw new AppError(httpStatus.NOT_FOUND, "Driver profile not found");
+  }
+
+  const updatedRide = await Ride.findByIdAndUpdate(
+    rideId,
+    { $addToSet: { declinedDrivers: driver._id } },
+    { new: true },
+  )
+    .populate("division")
+    .populate("district")
+    .populate("rideType")
+    .populate("user", "name phone")
+    .populate("driver");
+
+  if (!updatedRide) {
+    throw new AppError(httpStatus.NOT_FOUND, "Ride not found");
+  }
+
+  return updatedRide;
+};
+
 export const RideService = {
   // RideType services
   createRideType,
@@ -251,6 +399,9 @@ export const RideService = {
   getSingleRide,
   updateRide,
   deleteRide,
-
-  getRideByUserId
+  getRideByUserId,
+  getAvailableRidesForDriver,
+  acceptRideByDriver,
+  rejectRideByDriver,
+  getDriverRideHistory
 };

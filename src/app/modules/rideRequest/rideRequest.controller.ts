@@ -132,17 +132,12 @@ const getAvailableRides = catchAsync(async (req, res) => {
   const result = await RideRequestServices.getAvailableRides(
     req.query as Record<string, string>,
   );
-  const availableRides = result.data.filter(
-    (ride) => ride.status === RideRequestStatus.REQUESTED,
-  );
-  console.log(availableRides, "availableRides");
-  
   sendResponse(res, {
     statusCode: StatusCodes.OK,
     success: true,
     message: "Available rides fetched successfully",
     meta: result.meta,
-    data: availableRides,
+    data: result.data,
   });
 });
 

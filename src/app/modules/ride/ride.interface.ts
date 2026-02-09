@@ -23,6 +23,7 @@ export enum PlaceType {
 
 export enum RideStatus {
   ACTIVE = "Active",
+  ACCEPTED = "Accepted",
   COMPLETED = "Completed",
   CANCELLED = "Cancelled",
 }
@@ -63,6 +64,7 @@ export interface IRide {
   rideType: Types.ObjectId;
   availableSeats?: number;
   driver?: Types.ObjectId;
+  declinedDrivers?: Types.ObjectId[];
   user: Types.ObjectId;
   status?: RideStatus;
   vehicle?: RideVehicle;

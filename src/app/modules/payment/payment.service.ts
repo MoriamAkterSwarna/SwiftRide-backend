@@ -9,6 +9,7 @@ import { sendEmail } from "../../utils/sendEmail";
 import { BookingStatus } from "../booking/booking.interface";
 import { Booking } from "../booking/booking.model";
 import { IRide } from "../ride/ride.interface";
+import { Ride } from "../ride/ride.model";
 import { ISSLCommerz } from "../sslcommerz/sslcommerz.interface";
 import { SSLCommerzService } from "../sslcommerz/sslcommerz.service";
 import { IUser } from "../user/user.interface";
@@ -18,19 +19,75 @@ import httpStatus from "http-status-codes";
 
 
 
-const initPayment = async (bookingId: string) => {
-  const payment = await Payment.findOne({ booking: bookingId });
+const initPayment = async (rideId: string) => {
+  // Look up existing unpaid payment for this ride
+  let payment = await Payment.findOne({ 
+    ride: rideId,
+    status: PaymentStatus.Unpaid 
+  });
 
+  // If no unpaid payment exists, create a new one
   if (!payment) {
-    throw new AppError(httpStatus.NOT_FOUND, "Payment not found");
+    const ride = await Ride.findById(rideId).populate("user");
+
+    if (!ride) {
+      throw new AppError(httpStatus.NOT_FOUND, "Ride not found");
+    }
+
+    // Create a unique transaction ID
+    const transactionId = `RIDE-${rideId}-${Date.now()}-${Math.random().toString(36).substring(7)}`;
+    
+    try {
+      payment = await Payment.create({
+        ride: rideId,
+        user: ride.user,
+        transactionId: transactionId,
+        amount: (ride.cost || 0) * (ride.availableSeats || 1),
+        status: PaymentStatus.Unpaid,
+      });
+    } catch (createError: any) {
+      // If duplicate error due to race condition, try to find the payment again
+      if (createError.code === 11000) {
+        payment = await Payment.findOne({ 
+          ride: rideId,
+          status: PaymentStatus.Unpaid 
+        });
+        if (!payment) {
+          throw new AppError(httpStatus.BAD_REQUEST, "Unable to create payment. Please try again in a moment.");
+        }
+      } else {
+        throw createError;
+      }
+    }
   }
 
-  const booking = await Booking.findById(payment.booking);
+  // Get ride details for payment info
+  const ride = await Ride.findById(rideId).populate("user");
 
-  const userAddress = (booking?.user as any).address;
-  const userEmail = (booking?.user as any).email;
-  const userPhoneNumber = (booking?.user as any).phone;
-  const userName = (booking?.user as any).name;
+  if (!ride) {
+    throw new AppError(httpStatus.NOT_FOUND, "Ride not found");
+  }
+
+  // Extract user data with fallbacks
+  const user = ride?.user as any;
+  const userAddress = user?.address || "Dhaka, Bangladesh";
+  const userEmail = user?.email || "customer@example.com";
+  const userPhoneNumber = user?.phone || user?.phoneNumber || "01700000000";
+  const userName = user?.name || "Customer";
+
+  console.log("User data for payment:", {
+    name: userName,
+    email: userEmail,
+    phone: userPhoneNumber,
+    address: userAddress,
+    amount: payment.amount,
+    transactionId: payment.transactionId,
+  });
+
+  // Validate required fields
+  if (!userName || !userEmail || !userPhoneNumber) {
+    throw new AppError(httpStatus.BAD_REQUEST, "Missing required user information for payment");
+  }
 
   const sslPayload: ISSLCommerz = {
     address: userAddress,
@@ -41,6 +98,15 @@ const initPayment = async (bookingId: string) => {
     transactionId: payment.transactionId,
   };
   const sslPayment = await SSLCommerzService.sslPaymentInit(sslPayload);
+
+  console.log("SSLCommerz Full Response:", JSON.stringify(sslPayment, null, 2));
+  console.log("SSLCommerz Response Keys:", Object.keys(sslPayment || {}));
+  console.log("GatewayPageURL:", sslPayment?.GatewayPageURL);
+
+  if (!sslPayment || !sslPayment.GatewayPageURL) {
+    console.error("SSLCommerz did not return GatewayPageURL");
+    throw new AppError(httpStatus.BAD_REQUEST, "Failed to initialize payment gateway. Please check SSLCommerz configuration.");
+  }
 
   return {
     paymentUrl: sslPayment.GatewayPageURL,
@@ -211,7 +277,13 @@ const cancelPayment = async (query: Record<string, string>) => {
   }
 };
 
+const getPaymentHistory = async (userId: string) => {
+  const payments = await Payment.find({ user: userId })
+    .populate("ride", "title cost availableSeats")
+    .sort({ createdAt: -1 });
 
+  return payments;
+};
 
 export const PaymentServices = {
   initPayment,
@@ -219,4 +291,5 @@ export const PaymentServices = {
   getInvoiceDownloadUrl,
   failPayment,
   cancelPayment,
+  getPaymentHistory,
 };

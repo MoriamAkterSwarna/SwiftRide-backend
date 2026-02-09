@@ -305,20 +305,31 @@ const getSingleRideRequest = async (id: string) => {
 
 const getAvailableRides = async (query: Record<string, string>) => {
   const queryBuilder = new QueryBuilder(
-    RideRequest.find().populate(
-      "rider",
-      "name phone rating",
-      "user"
-    ),
+    RideRequest.find({
+      status: {
+        $in: [
+          RideRequestStatus.REQUESTED,
+          RideRequestStatus.PENDING,
+          /^requested$/i,
+          /^pending$/i,
+        ],
+      },
+    }).populate("rider", "name phone rating"),
     query,
   );
 
   const result = queryBuilder.filter().sort().fields().pagination();
-  console.log(queryBuilder, "riderequest service ")
   const [data, meta] = await Promise.all([
     result.build(),
     queryBuilder.getMeta(),
   ]);
+
+  console.log(
+    "[getAvailableRides] count:",
+    data.length,
+    "statuses:",
+    data.map((ride) => ride.status),
+  );
 
   return {
     data,

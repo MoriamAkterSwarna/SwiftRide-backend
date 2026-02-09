@@ -4,13 +4,14 @@ import { sendResponse } from "../../utils/sendResponse";
 import { PaymentServices } from "./payment.service";
 import { envVars } from "../../config/env";
 import { SSLCommerzService } from "../sslcommerz/sslcommerz.service";
+import { JwtPayload } from 'jsonwebtoken';
 
 
 const initPayment = catchAsync(async (req: Request, res: Response) => {
 
-    const bookingId = req.params.bookingId;
+    const rideId = req.params.rideId;
 
-    const result = await PaymentServices.initPayment(bookingId);
+    const result = await PaymentServices.initPayment(rideId);
     sendResponse(res, {
         statusCode: 200,
         success: true,
@@ -100,11 +101,23 @@ const validatePayment = catchAsync(
     }
 );
 
+const getPaymentHistory = catchAsync(async (req: Request, res: Response) => {
+    const user = req.user as JwtPayload;
+    const result = await PaymentServices.getPaymentHistory(user.userId);
+    sendResponse(res, {
+        statusCode: 200,
+        success: true,
+        message: "Payment history fetched successfully",
+        data: result,
+    });
+});
+
 export const PaymentController = {
     initPayment,
     successPayment,
     getInvoiceDownloadUrl,
     failPayment,
     cancelPayment,
-    validatePayment
-}
+    validatePayment,
+    getPaymentHistory
+};

@@ -39,14 +39,25 @@ const allowedOrigins = [
   envVars.FRONTEND_URL,
   "http://localhost:5173",
   "http://127.0.0.1:5173",
+  "https://sandbox.sslcommerz.com",
+  "https://securepay.sslcommerz.com",
 ].filter(Boolean);
 
 app.use(
   cors({
     origin: (origin, callback) => {
-      if (!origin || allowedOrigins.includes(origin)) {
+      if (!origin) {
         return callback(null, true);
       }
+
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+
+      if (origin.endsWith(".sslcommerz.com")) {
+        return callback(null, true);
+      }
+
       return callback(new Error("Not allowed by CORS"));
     },
     credentials: true,
@@ -67,10 +78,9 @@ app.get("/", async (req: Request, res: Response) => {
 
 
 
-app.use(globalErrorHandlers);
-
-
 app.use(notFound);
+
+app.use(globalErrorHandlers);
 
   
 

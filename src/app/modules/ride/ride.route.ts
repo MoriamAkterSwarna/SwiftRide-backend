@@ -48,6 +48,26 @@ router.get(
     checkAuth(Role.USER, Role.RIDER),
     RideController.getMyRides
 );
+router.get(
+    "/driver-history",
+    checkAuth(Role.DRIVER),
+    RideController.getDriverRideHistory
+);
+router.get(
+    "/available-rides",
+    checkAuth(Role.DRIVER),
+    RideController.getAvailableRidesForDriver
+);
+router.patch(
+    "/:id/driver-accept",
+    checkAuth(Role.DRIVER),
+    RideController.acceptRideByDriver
+);
+router.patch(
+    "/:id/driver-reject",
+    checkAuth(Role.DRIVER),
+    RideController.rejectRideByDriver
+);
 router.get("/user/:userId", RideController.getRideByUserId);
 router.get("/division/:divisionId", RideController.getRidesByDivision);
 router.get("/district/:districtId", RideController.getRidesByDistrict);

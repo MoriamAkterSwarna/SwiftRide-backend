@@ -110,6 +110,11 @@ const rideSchema = new Schema<IRide>(
       type: Schema.Types.ObjectId,
       ref: "Driver",
     },
+    declinedDrivers: {
+      type: [Schema.Types.ObjectId],
+      ref: "Driver",
+      default: [],
+    },
     user: {
       type: Schema.Types.ObjectId,
       ref: "User",
@@ -157,9 +162,8 @@ rideSchema.pre("findOneAndUpdate", async function () {
     }
 
     ride.slug = slug;
+    this.setUpdate(ride);
   }
-
-  this.setUpdate(ride);
 });
 
 export const Ride = model<IRide>("Ride", rideSchema);

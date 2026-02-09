@@ -125,6 +125,22 @@ const getRideByUserId = catchAsync(async (req: Request, res: Response) => {
     });
 });
 
+const getDriverRideHistory = catchAsync(async (req: Request, res: Response) => {
+    const user = req.user as JwtPayload | undefined;
+    const query = req.query;
+    const result = await RideService.getDriverRideHistory(
+        user?.userId as string,
+        query as Record<string, string>
+    );
+    sendResponse(res, {
+        statusCode: 200,
+        success: true,
+        message: "Driver ride history retrieved",
+        data: result.data,
+        meta: result.meta,
+    });
+});
+
 const getRidesByDivision = catchAsync(async (req: Request, res: Response) => {
     const divisionId = req.params.divisionId;
     const result = await RideService.getRidesByDivision(divisionId);
@@ -197,6 +213,52 @@ const deleteRide = catchAsync(async (req: Request, res: Response) => {
     });
 });
 
+const getAvailableRidesForDriver = catchAsync(async (req: Request, res: Response) => {
+    const user = req.user as JwtPayload | undefined;
+    const query = req.query;
+    const result = await RideService.getAvailableRidesForDriver(
+        user?.userId as string,
+        query as Record<string, string>
+    );
+    sendResponse(res, {
+        statusCode: 200,
+        success: true,
+        message: "Available rides retrieved",
+        data: result.data,
+        meta: result.meta,
+    });
+});
+
+const acceptRideByDriver = catchAsync(async (req: Request, res: Response) => {
+    const user = req.user as JwtPayload | undefined;
+    const { id } = req.params;
+    const result = await RideService.acceptRideByDriver(
+        user?.userId as string,
+        id,
+    );
+    sendResponse(res, {
+        statusCode: 200,
+        success: true,
+        message: "Ride accepted successfully",
+        data: result,
+    });
+});
+
+const rejectRideByDriver = catchAsync(async (req: Request, res: Response) => {
+    const user = req.user as JwtPayload | undefined;
+    const { id } = req.params;
+    const result = await RideService.rejectRideByDriver(
+        user?.userId as string,
+        id,
+    );
+    sendResponse(res, {
+        statusCode: 200,
+        success: true,
+        message: "Ride declined successfully",
+        data: result,
+    });
+});
+
 export const RideController = {
     // RideType controllers
     createRideType,
@@ -215,5 +277,9 @@ export const RideController = {
     getSingleRide,
     updateRide,
     deleteRide,
-    getRideByUserId
+    getRideByUserId,
+    getDriverRideHistory,
+    getAvailableRidesForDriver,
+    acceptRideByDriver,
+    rejectRideByDriver,
 };
