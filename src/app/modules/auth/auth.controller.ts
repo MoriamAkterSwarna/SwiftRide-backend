@@ -218,9 +218,7 @@ const googleCallbackController = catchAsync(
     const tokenInfo = createUserTokens(user);
     setAuthCookie(res, tokenInfo);
 
-    // Redirect with tokens in query params so frontend can capture them
-    const userJson = encodeURIComponent(JSON.stringify(user));
-    const callbackUrl = `${envVars.FRONTEND_URL}/auth/google/callback?accessToken=${tokenInfo.accessToken}&refreshToken=${tokenInfo.refreshToken}&user=${userJson}`;
+    const callbackUrl = `${envVars.FRONTEND_URL}/${redirectTo}`;
     
     res.redirect(callbackUrl);
   },
